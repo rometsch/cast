@@ -1,0 +1,12 @@
+#+title: Rometsch's Simulation Tools
+#+author: Thomas Rometsch
+
+* Intro
+
+A collection of my python tools to manage and analyze computer simulations.
+
+* Components
+
+** Datasets
+
+A sketch of a dataset class/interface can be found in [[file:notes/dataset.org]]

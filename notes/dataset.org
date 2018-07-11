@@ -1,0 +1,243 @@
+#+TITLE: Generic Dataset class
+#+AUTHOR: Thomas Rometsch
+#+PROPERTY: header-args:calc :exports both
+#+PROPERTY: header-args :eval never-export
+
+* Idea
+A dataset class to store simulation data in memory for postprocessing.
+This is supposed to be an abstract library class from which classes can
+inherit to suite specific simulation output files by defining a custom parser.
+Also calculations for specific projects can be defined in an inheriting class.
+
+* Class diagram
+#+begin_src plantuml :file class_diagram.png
+skinparam monochrome false
+Dataset : Grid grids
+Dataset : Time times
+Dataset : Var vars
+Dataset : aliases
+Dataset : get(var, t=None, n=None)
+Dataset : set(var, val, t=None, n=None)
+Dataset : register_alias(name, alias)
+Dataset : register_var(name, calc_func)
+
+Time : timearr
+Time : find_closest(t)
+Time : is_elem(t)
+
+Var : name
+Var : dim
+Var : data
+Var : Time time
+Var : Grid grid
+Var : push()
+
+Grid : dimension
+Grid : geometry
+Grid : X
+Grid : dX
+Grid : get_X(axis, full=Flase)
+Grid : get_dX(axis, full=False)
+Grid : get_dV()
+Grid : get_subgrid()
+
+Tools : interpolate(...)
+Tools : sph_to_cart(...)
+
+Dataset <|-- ProjectSpecificDataset
+#+end_src
+
+#+RESULTS:
+[[file:class_diagram.png]]
+
+* Desired properties
+The dataset class should have the following desired properties
+
+** Time management
+The dataset needs to support different arrays of points in time to support
+data which is recorded with different time steps.
+There should be a method to find the closest point in time.
+
+** Dimensionality of data
+*** multidemsional arrays of values
+e.g. quantities defined for all cells on a grid
+
+*** time series of scalar or vector quantities
+If there are differnt values for the same quantity, the quantity should have
+an accociated ~times~ array, which has all the points in time belonging to the data.
+Since for simulation data, most points in time are the same, this data only needs to
+be stored once.
+
+** Grid data
+Grid data should be stored only once, if the grid doesnt change in time.
+Need a ~grid_is_static~ flag to signal this.
+
+** Generic getter and setter
+1. A get() method should be implemented which takes
+   the name of a variable and possibly the time and returns the desired data.
+2. If the variable is not present in the dataset, the getter attempts to
+   look up a function to calculate it from available data. Such a function
+   needs to be registered beforehand (coded into the dataset).
+3. The getter supports aliases which can be defined and registered via a function.
+For a more convenient usage of the class, the ~[]~ operator should be overwritten
+using ~def __getitem__()~ and ~def __setitem__()~.
+
+** Caching
+1. Caching of data copied over network.
+2. Caching of calculated values in memory.
+3. Caching of calculated values on disk.
+
+** Parser
+The parser should be implemented by the class inheriting from the abstract class.
+To add data to the dataset, the set() function should be used.
+
+** Statistics
+The dataset class should provide methods to get simple statistical properties
+like minimum and maximum.
+
+** Interpolation
+There should be a method to interpolate values in both time and space.
+1) getter needs a keyword flag ~interpolated~ which defaults to ~False~
+2) if flag is set, getter needs to call the interpolating function
+
+** Averaging, summing and integration
+The dataset needs to provide functions for applying
++ integration
++ averaging
++ summing
+over time and/or space.
+
+* Import of tab separated values
+To import tab separated values =numpy.loadtxt()= can be used.
+However, this fails if there are incomplete lines, which can occur
+should the simulation crash while writing the output.
+
+=samples/incomplete.dat= is an example of a 3 line data file
+where the last line is incomplete.
+
+=numpy.loadtxt()= troughs an error upon encountering the incomplete line.
+
+#+BEGIN_SRC python :results output
+  import numpy as np
+
+  try:
+      data = np.loadtxt("samples/incomplete.dat", unpack=True)
+      print(data)
+  except ValueError:
+      print("Caught a ValueError")
+#+END_SRC
+
+#+RESULTS:
+: Caught a ValueError
+
+=numpy.genfromtxt()= on the other hand can be configured such that
+missing values are replaced with default values (=missing_values=, =filling_values=) or that a line showing
+an inconsistency is ignored (=invalid_raise=False=).
+
+#+BEGIN_SRC python :results output
+  import numpy as np
+
+  try:
+      data = np.genfromtxt("samples/incomplete.dat", unpack=True, invalid_raise=False)
+      print(data)
+  except ValueError:
+      print("Caught a ValueError")
+      raise
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+[[  5.72398500e+01   5.72406600e+01]
+ [  1.40832000e+05   1.40834000e+05]
+ [  1.00027399e-02   1.00027399e-02]
+ [  5.91624320e-08   5.91977421e-08]
+ [  1.04951380e-07   1.04942500e-07]
+ [  1.50946272e-01   1.50946238e-01]
+ [  3.53282144e-06   3.53222690e-06]
+ [  2.04732285e-02   2.04732021e-02]
+ [  8.36247506e-05   8.36222219e-05]
+ [ -2.19104504e-05  -2.19075824e-05]
+ [  7.72500028e-02   7.72500029e-02]
+ [ -3.60692242e-06  -3.62151459e-06]
+ [  2.06416777e-07   2.05938215e-07]
+ [  4.11137143e-06   3.80408044e-06]]
+#+end_example
+
+Using the =invalid_raise=False= option, the last line is simply ignored,
+but the rest of the file is being read as desired.
+* Python notes / playground
+** Regex
+
+*** simple match
+
+#+BEGIN_SRC ipython :session :exports both :results raw drawer
+  import re
+
+  files = [
+      "gasdens0.dat",
+      "momx.dat",
+      "ay_planet_0.dat",
+      "domain_z.dat",
+      "momz.dat",
+      "units.dat",
+      "gasvx0.dat",
+      "momy.dat",
+      "gasvy1.dat",
+      "orbit0.dat",
+      "gasvy0.dat",
+      "planet0.dat",
+      "time.dat",
+      "gasenergy1.dat",
+      "timeCoarse.dat",
+      "vy0_2d.dat",
+      "grid000.inf",
+      "gasenergy0.dat",
+      "dimensions.dat",
+      "tqwk0.dat",
+      "gasvx1.dat",
+      "vx0_2d.dat",
+      "vz0_2d.dat",
+      "gasdens1.dat",
+      "domain_y.dat",
+      "bigplanet0.dat",
+      "az_planet_0.dat",
+      "density0_2d.dat",
+      "ax_planet_0.dat",
+      "variables.par",
+      "mass.dat",
+      "domain_x.dat",
+      "IDL.var",
+      "gasvz0.dat",
+      "gasvz1.dat",
+  ]
+
+  res = [re.match(".*\.dat", s) for s in files]
+  print([r.string for r in res if r is not None])
+  print([m.string for m in (re.match(".*\.dat", s) for s in files) if m is not None])
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+# Out[57]:
+:END:
+
+
+** os walk
+
+#+BEGIN_SRC ipython :session  :exports both :results output drawer
+  import os
+  rootdir = '/scratch/rometsch/planet-disk-interaction/idoco/icegiant-test'
+  outputdir_indicators = ["variables.par", "dimensions.dat"]
+  for dirname, dirnames, filenames in os.walk(rootdir):
+      for subdirname in dirnames:
+          path = os.path.join(dirname, subdirname)
+          if all(s in os.listdir(path) for s in outputdir_indicators):
+              print(path)
+              break
+
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+/scratch/rometsch/planet-disk-interaction/idoco/icegiant-test/outputs
+:END:
