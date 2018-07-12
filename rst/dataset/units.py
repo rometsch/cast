@@ -38,6 +38,8 @@ defaults = {
     'N'   : u.Unit(1)	# photon count
 }
 
+unitsymbols = ['L','T','M','C','Th','Ad','SA','I','Mag','A','N']
+
 alias = {
 	'length'		: 'L'  ,	# length
 	'time'			: 'T'  ,	# time
