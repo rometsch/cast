@@ -116,10 +116,12 @@ class UnitSystem:
 		self.knownUnits[regex] = self.parse(unit)
 
 	def find(self, name):
-		rv = u.Unit(1)
+		rv = 1
 		for key in self.knownUnits:
 			if re.match(key, name):
 				rv = self.knownUnits[key]
+		if not isinstance(rv, u.core.UnitBase): #rv is 1:
+			print("Warning: No unit found for '{}'".format(name))
 		return rv
 
 	def parse(self, un):
