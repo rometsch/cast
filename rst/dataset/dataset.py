@@ -17,6 +17,7 @@ class Dataset:
 		self.grids = []
 		self.times = []
 		self.timeSeries = {}
+		self.particles = {}
 		self.aliases = []
 		self.calc_vars = {}
 		self.units = {}
@@ -54,6 +55,22 @@ class Time:
 			return guess -k + np.argmin(np.abs(t - sli))
 		# If no index was found in the vicinity search globaly
 		return np.argmin(np.abs(self.data-t))
+
+class Particle:
+	def __init__(self, name=None, resource=None, data={}):
+		self.name = name
+		self.resource = resource
+		self.data = data
+
+	def load(self, varname = None, n=None ):
+		raise NotImplementedError("load function of abstract class called. Need to define this function for the codespecific dataset")
+
+	def __getitem__(self, varname):
+		try:
+			return self.data[varname]
+		except KeyError:
+			self.load()
+			return self.data[varname]
 
 
 class Field:
