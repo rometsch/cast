@@ -24,6 +24,10 @@ scalar_files = ["mass.dat", "momx.dat", "momy.dat", "momz.dat", ]
 
 collections = ["time.dat"]
 
+# Look for planet related files and extract the planet number
+# from the filename using (\d+) group in regex pattern
+particle_file_pattern = ["bigplanet(\d+)\.dat", "orbit(\d+)\.dat", "a._planet_(\d+)\.dat"]
+
 known_units = {
 	'mass' : units.Dimension(['mass'], [1]),
 	'mom.' : units.Dimension(['mass', 'length', 'time'], [1, 2, -1])
@@ -49,6 +53,29 @@ def fargo_code_units(datadir):
         cu['time'] = 'year'
     return units.UnitSystem(cu)
 
+def parse_text_header(fpath):
+	with open(fpath, 'r') as f:
+		header = []
+		for l in f:
+			l = l.strip()
+			if l[0] != '#':
+				break
+			header.append(l)
+	return parse_v1_header(header)
+
+def parse_text_header_v1(header):
+	names = []
+	for l in header:
+		l = l.strip('#').strip()
+		if l[:6] == "Syntax":
+			l = l[6:].lstrip().lstrip(":")
+			names = [s.strip() for s in l.split('<tab>')]
+	timecol = None
+	for n, name in enumerate(names):
+		if name in ['time', 'simulation time']:
+			timecol = n
+	return names, timecol
+
 class ScalarTimeSeries(TimeSeries):
     def __init__(self, time=None, data=None, datafile=None, name = None, unitSys = None):
         self.time = time
@@ -69,9 +96,61 @@ class ScalarTimeSeries(TimeSeries):
             if self.name is not None:
                 self.data *= self.unitSys.find(self.name)
 
+class Fargo3dParticle(Particle):
+	def __init__(self, name, resource=None, unitSys=None):
+		super().__init__(name=name, resource = {})
+		self.unitSys = unitSys
+		if resource:
+			self.add_resource(resource)
+
+	def add_resource(self, res):
+		fname = os.path.basename(res)
+		if re.match("bigplanet\d+\.dat", fname):
+			self.resource['planet'] = res
+		elif re.match("orbit\d+\.dat", fname):
+			self.resource['orbit'] = res
+		else:
+			rs = re.match("a(\w+)_planet_\d\.dat", fname)
+			if rs:
+				self.resource["a{}".format(rs.groups()[0])] = res
+
+	def load(self):
+		if "planet" in self.resource:
+			data = np.genfromtxt(self.resource["planet"])
+			names = ["TimeStep", "x1", "x2", "x3", "v1",
+					 "v2", "v3", "mass", "time", "OmegaFrame"]
+			for k, name in enumerate(names):
+				self.data[name] = data[:,k]
+
+			for v in ["x1", "x2", "x3"]:
+				self.data[v] *= self.unitSys['L']
+
+			for v in ["v1", "v2", "v3"]:
+				self.data[v] *= self.unitSys['L']/self.unitSys['T']
+
+			self.data["mass"] *= self.unitSys['M']
+			self.data["time"] *= self.unitSys['T']
+			self.data["OmegaFrame"] *= self.unitSys['T']**(-1)
+
+		if "orbit" in self.resource:
+			data = np.genfromtxt(self.resource["orbit"])
+			names = ["time", "e", "a", "MeanAnomaly",
+					 "TrueAnomaly", "Periastron", "XPosAngle",
+					 "i", "AscendingNode", "XYPerihelion"]
+			for k, name in enumerate(names):
+				self.data[name] = data[:,k]
+
+			self.data["time"] *= self.unitSys['T']
+			self.data["a"]    *= self.unitSys['L']
+			for v in ["MeanAnomaly", "TrueAnomaly"]:
+				self.data[v]	*= self.unitSys['T']**(-1)
+
+		for v in ["ax", "ay", "az"]:
+			if v in self.resource:
+				data = np.genfromtxt(self.resource[v])[:,1]
+				self.data[v] = data*self.unitSys['L']*self.unitSys['T']**(-2)
 
 class Fargo3dDataset(Dataset):
-
 	def __init__(self, rootdir):
 		super().__init__()
 		self.rootdir = rootdir
@@ -82,6 +161,7 @@ class Fargo3dDataset(Dataset):
 		self.find_datafiles()
 		self.find_scalars()
 		self.find_collections()
+		self.find_particles()
 
 	def find_datadir(self):
 		# Look for an output dir inside the rootdir
@@ -112,7 +192,7 @@ class Fargo3dDataset(Dataset):
 
 	def add_collection(self, collection):
 		fpath = os.path.join(self.datadir, collection)
-		names, timecol = parse_header(fpath)
+		names, timecol = parse_text_header(fpath)
 		if timecol is None:
 			raise TypeError("Could not find time info for constructing time series in '{}' with names '{}'.".format(fpath, names))
 		data = np.genfromtxt(fpath)
@@ -123,25 +203,14 @@ class Fargo3dDataset(Dataset):
 			vardata = data[:,n]*self.units.find(name)
 			self.timeSeries[name] = ScalarTimeSeries(time = time, data = vardata, name = name)
 
-def parse_header(fpath):
-	with open(fpath, 'r') as f:
-		header = []
-		for l in f:
-			l = l.strip()
-			if l[0] != '#':
-				break
-			header.append(l)
-	return parse_v1_header(header)
-
-def parse_v1_header(header):
-	names = []
-	for l in header:
-		l = l.strip('#').strip()
-		if l[:6] == "Syntax":
-			l = l[6:].lstrip().lstrip(":")
-			names = [s.strip() for s in l.split('<tab>')]
-	timecol = None
-	for n, name in enumerate(names):
-		if name in ['time', 'simulation time']:
-			timecol = n
-	return names, timecol
+	def find_particles(self):
+		for f in self.datafiles:
+			for p in particle_file_pattern:
+				rs = re.match(p, f)
+				if rs:
+					fpath = os.path.join(self.datadir, f)
+					name = rs.groups()[0]
+					if name not in self.particles:
+						self.particles[name] = Fargo3dParticle(name, resource=fpath, unitSys=self.units)
+					else:
+						self.particles[name].add_resource(fpath)
