@@ -64,7 +64,11 @@ class UnitSystem:
 		self.knownUnits = {}
 		self.units = {}
 		for key in units:
-			self.units[key] = self.parse(units[key])
+			if key in alias:
+				name = alias[key]
+			else:
+				name = key
+			self.units[name] = self.parse(units[key])
 
 		for key in defaults:
 			if key not in self.units:
