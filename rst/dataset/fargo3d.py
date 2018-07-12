@@ -33,26 +33,6 @@ known_units = {
 	'mom.' : units.Dimension(['mass', 'length', 'time'], [1, 2, -1])
 }
 
-def fargo_code_units(datadir):
-    cu = {}
-    try:
-        with open( os.path.join(datadir, 'units.dat')) as unitfile:
-            for l in unitfile:
-                l = l.strip()
-                if l[0] == "#":
-                    continue
-                l = l.split('\t')
-                ignore_chars = ['', '?']
-                if l[1] in ignore_chars or l[2] in ignore_chars:
-                    continue
-                cu[l[0]] = l[1:]
-    except OSError:
-        # Fall back to a wild guess
-        cu['length'] = 'meter'
-        cu['mass'] = 'kg'
-        cu['time'] = 'year'
-    return units.UnitSystem(cu)
-
 def parse_text_header(fpath):
 	with open(fpath, 'r') as f:
 		header = []
@@ -61,7 +41,7 @@ def parse_text_header(fpath):
 			if l[0] != '#':
 				break
 			header.append(l)
-	return parse_v1_header(header)
+	return parse_text_header_v1(header)
 
 def parse_text_header_v1(header):
 	names = []
@@ -155,7 +135,7 @@ class Fargo3dDataset(Dataset):
 		super().__init__()
 		self.rootdir = rootdir
 		self.find_datadir()
-		self.units = fargo_code_units(self.datadir)
+		self.units = units.parse_code_units_file(self.datadir)
 		for key in known_units:
 			self.units.register(key, known_units[key])
 		self.find_datafiles()
