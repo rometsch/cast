@@ -8,6 +8,7 @@
 
 import astropy.units as u
 import re
+import os
 
 defaults_astropy = {
 	'L' : u.meter,		# length
@@ -49,19 +50,45 @@ alias = {
 
 
 class Dimension:
-	def __init__(self, bases, powers):
-		self.bases = bases
-		self.powers = powers
+	def __init__(self, bases=None, powers=None, **kwargs):
+		if bases and powers:
+			self.bases = bases
+			self.powers = powers
+		else:
+			self.bases = []
+			self.powers = []
+			for s in unitsymbols:
+				if s in kwargs:
+					self.bases.append(s)
+					self.powers.append(kwargs[s])
 
 	def toUnit(self, us):
-		rv = u.Unit(1)
+		rv = 1 #u.Unit(1)
 		for b,p in zip(self.bases, self.powers):
 			rv *= u.Unit(us[b])**p
 		return u.Unit(rv)
 
+def parse_code_units_file(datadir, defaults = defaults):
+    cu = {}
+    try:
+        with open( os.path.join(datadir, 'units.inf')) as unitfile:
+            for l in unitfile:
+                l = l.strip()
+                if l[0] == "#":
+                    continue
+                l = l.split('\t')
+                ignore_chars = ['', '?']
+                if l[1] in ignore_chars or l[2] in ignore_chars:
+                    continue
+                cu[l[0]] = l[1:]
+    except OSError:
+        pass
+    return UnitSystem(cu, defaults=defaults)
+
 class UnitSystem:
-	def __init__(self, units = {}):
+	def __init__(self, units = {}, defaults=defaults):
 		self.knownUnits = {}
+		self.defaults = defaults
 		self.units = {}
 		for key in units:
 			if key in alias:
