@@ -5,16 +5,27 @@
 #	Date	: 2017-12-13
 #----------------------------------------------------------------------
 
-import unicodedata
 import numpy as np
 from collections import OrderedDict as ODict
 from getter import Getter
+import os
+
+def find_dir_containing(patterns, rootdir):
+	if isinstance(patterns, str):
+		patterns = [patterns]
+	# Look for an output dir inside the rootdir
+	for dirname, dirnames, filenames in os.walk(rootdir):
+		for subdirname in dirnames + ['']:
+			path = os.path.join(dirname, subdirname)
+			if all(s in os.listdir(path) for s in patterns):
+				return path
+	raise FileNotFoundError("Could not find a directory with files matching the patterns '{}' in the (sub)directories of '{}'".format(patterns, rootdir))
 
 class Dataset:
 	# This is the abstract dataset class from which any
 	# project-specific dataset class should inherit
 	def __init__(self):
-		self.grids = []
+		self.grids = {}
 		self.times = []
 		self.timeSeries = {}
 		self.particles = {}
