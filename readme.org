@@ -1,9 +1,9 @@
-#+title: Rometsch's Simulation Tools
+#+title: Common Astrophysics Simulation Toolbox
 #+author: Thomas Rometsch
 
 * Intro
 
-A collection of my python tools to manage and analyze computer simulations.
+A collection of my python tools to manage and analyze astophysics simulations.
 
 * Components
 
