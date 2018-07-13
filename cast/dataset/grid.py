@@ -45,8 +45,17 @@ class AbstractGrid:
                     raise ValueError("Unequal spacing found in {} but d{} is not specified.".format(l,l))
 
     def _dV(self):
-        for l in self.dim_labels:
-            pass
+        self.dV = self["dV" + self.dim_labels[0]]
+        for n in range(1,self.dim):
+            l = self.dim_labels[n]
+            self.dV = np.repeat( np.expand_dims(self.dV, n), self["N"+l], axis=n)*self["dV"+l]
+
+    def _check_limit(self, name, lim):
+        if name in self.__dict__:
+            X = self.__dict__[name]
+            if not (all(X >= lim[0]) and all(X <= lim[1])):
+                raise ValueError(name + " must be in range [{},{}] but min = {}, max = {}".format(
+                    lim[0], lim[1], np.min(X), np.max(X)))
 
 
 class SphericalRegularGrid(AbstractGrid):
@@ -66,17 +75,21 @@ class SphericalRegularGrid(AbstractGrid):
                 self.phi = phi
                 self.dim_labels.append("phi")
 
-        elif dim==3:
-            self.theta = theta
-            self.phi = phi
-            self.dim_labels += ["theta", "phi"]
-
         if dr is not None:
             self.dr = dr
         if dtheta is not None:
             self.dtheta = dtheta
         if dphi is not None:
             self.dphi = dphi
+
+        elif dim==3:
+            self.theta = theta
+            self.phi = phi
+            self.dim_labels += ["theta", "phi"]
+
+        self._check_limit("r", [0,np.inf])
+        self._check_limit("theta", [0,np.pi])
+        self._check_limit("phi", [0, 2*np.pi])
 
         super().__init__()
 
@@ -90,7 +103,6 @@ class SphericalRegularGrid(AbstractGrid):
         th = self.theta
         dth = self.dtheta
         self.dVtheta = np.cos( th - dth/2 ) - np.cos( th + dth/2 )
-
 
     def _dVphi(self):
         try:
