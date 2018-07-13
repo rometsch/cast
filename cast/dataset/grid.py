@@ -9,7 +9,21 @@ import numpy as np
 import sys
 
 class AbstractGrid:
-    def __init__(self):
+    def __init__(self, domains_expected = [], limits = [], **kwargs):
+        self.dim = 0
+        self.dim_labels = []
+
+        for l in ["r", "theta", "phi"]:
+            if l in kwargs:
+                self.dim += 1
+                self.dim_labels.append(l)
+                self.__dict__[l] = kwargs[l]
+            if "d"+l in kwargs:
+                self.__dict__["d"+l] = kwargs["d"+l]
+
+        for l, limit in zip(domains_expected, limits):
+            self._check_limit(l, limit)
+
         self._shape()
         self._dx()
 
@@ -59,39 +73,12 @@ class AbstractGrid:
 
 
 class SphericalRegularGrid(AbstractGrid):
-    def __init__(self, r=None, theta=None, phi=None, dr=None, dphi=None, dtheta=None):
-        self.dim = dim = sum(x is not None for x in [r, theta, phi])
-
-        if r is None:
-            raise ValueError("Can't have a spherical grid without radius. r={}".format(dim,r))
-        self.dim_labels = ["r"]
-        self.r = r
-
-        if dim==2:
-            if theta is not None:
-                self.theta = theta
-                self.dim_labels.append("theta")
-            elif phi is not None:
-                self.phi = phi
-                self.dim_labels.append("phi")
-
-        if dr is not None:
-            self.dr = dr
-        if dtheta is not None:
-            self.dtheta = dtheta
-        if dphi is not None:
-            self.dphi = dphi
-
-        elif dim==3:
-            self.theta = theta
-            self.phi = phi
-            self.dim_labels += ["theta", "phi"]
-
-        self._check_limit("r", [0,np.inf])
-        self._check_limit("theta", [0,np.pi])
-        self._check_limit("phi", [0, 2*np.pi])
-
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(domains_expected = ["r", "theta", "phi"],
+                         limits = [[0, np.inf], [0, np.pi], [0, 2*np.pi]],
+                         **kwargs)
+        if "r" not in self.__dict__:
+            raise ValueError("Can't have a spherical grid without radius.")
 
     def _V(self):
         self.V = np.sum(self["dV"])
