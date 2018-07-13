@@ -93,11 +93,13 @@ class SphericalRegularGrid(AbstractGrid):
 
         super().__init__()
 
+    def _V(self):
+        self.V = np.sum(self["dV"])
+
     def _dVr(self):
         r = self.r
         dr = self.dr
         self.dVr = ( (r+dr/2)**3 - (r-dr/2)**3 )/3
-
 
     def _dVtheta(self):
         th = self.theta
