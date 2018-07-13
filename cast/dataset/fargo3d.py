@@ -5,12 +5,12 @@
 #	Date	: 2018-07-10
 #----------------------------------------------------------------------
 
-from dataset import *
-import units
 import re
 import os
 import numpy as np
-
+import grid
+import units
+from dataset import *
 
 """ Datafiles produced by fargo3d.
 Filenames are given as regex expression to extract from file list."""
@@ -55,6 +55,34 @@ def parse_text_header_v1(header):
 		if name in ['time', 'simulation time']:
 			timecol = n
 	return names, timecol
+
+def centered_coordinates(xInterface):
+    x = 0.5*(xInterface[1:] + xInterface[:-1])
+    dx = xInterface[1:] - xInterface[:-1]
+    return (x, dx)
+
+def parse_Fargo3d_grid(datadir):
+    fpath = os.path.join(datadir, "dimensions.dat")
+    data = np.genfromtxt(fpath)
+    N = [int(data[k]) for k in [6,7,8]]
+    NGH = [int(data[k]) for k in [13,11,12]]
+    domain_data = {}
+    for k, dom, flabel in zip(range(3), ["phi", "r", "theta"], ["x", "y", "z"]):
+        if N[k] > 1:
+            domain_full = np.genfromtxt(os.path.join(datadir, "domain_" + flabel + ".dat"))
+            if NGH[k] > 0:
+                xInterface = domain_full[ NGH[k] : -NGH[k]]
+            else:
+                xInterface = domain_full
+            x, dx = centered_coordinates(xInterface)
+            if dom=="phi": # correct the definition of theta in [-pi,pi]
+                x += np.pi
+            domain_data[dom] = x
+            domain_data["d"+dom] = dx
+            if len(domain_data[dom]) != N[k]:
+                raise ValueError("Domain info files currupted:\
+                    N{} = {} != {} = Ntot - 2*Nghost".format(dom, len(domain_data[dom]), N[k]))
+    return grid.SphericalRegularGrid(**domain_data)
 
 class ScalarTimeSeries(TimeSeries):
     def __init__(self, time=None, data=None, datafile=None, name = None, unitSys = None):
@@ -130,6 +158,7 @@ class Fargo3dParticle(Particle):
 				data = np.genfromtxt(self.resource[v])[:,1]
 				self.data[v] = data*self.unitSys['L']*self.unitSys['T']**(-2)
 
+
 class Fargo3dDataset(Dataset):
 	def __init__(self, rootdir):
 		super().__init__()
@@ -138,6 +167,7 @@ class Fargo3dDataset(Dataset):
 		self.units = units.parse_code_units_file(self.datadir)
 		for key in known_units:
 			self.units.register(key, known_units[key])
+		self.find_grids()
 		self.find_datafiles()
 		self.find_scalars()
 		self.find_collections()
@@ -145,11 +175,10 @@ class Fargo3dDataset(Dataset):
 
 	def find_datadir(self):
 		# Look for an output dir inside the rootdir
-		for dirname, dirnames, filenames in os.walk(self.rootdir):
-			for subdirname in dirnames:
-				path = os.path.join(dirname, subdirname)
-				if all(s in os.listdir(path) for s in outputdir_indicators):
-					self.datadir = path
+		self.datadir = find_dir_containing(outputdir_indicators, self.rootdir)
+
+	def find_grids(self):
+		self.grids["full"] = parse_Fargo3d_grid(self.datadir)
 
 	def find_datafiles(self):
 		""" Search the datadir for datafiles."""
