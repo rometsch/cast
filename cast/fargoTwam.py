@@ -21,7 +21,8 @@ datafile_pattern = ".*\.dat"
 
 outputdir_indicators = ["Quantities.dat", "used_rad.dat", "misc.dat"]
 
-time_files = ["time.dat", "timeCoarse.dat"]
+time_files = { "fine": "Quantities.dat",
+			   "coarse" : "misc.dat"}
 
 scalar_files = ["mass.dat", "momx.dat", "momy.dat", "momz.dat" ]
 
@@ -30,6 +31,9 @@ collections = ["Quantities.dat", "misc.dat"]
 # Look for planet related files and extract the planet number
 # from the filename using (\d+) group in regex pattern
 particle_file_pattern = ["bigplanet(\d+)\.dat", "orbit(\d+)\.dat", "a._planet_(\d+)\.dat"]
+
+# capture output data (name, number) for fields with filenames like "gasdens7.dat"
+field_pattern = "([a-z]*[A-Z]*)([0-9]+)\.dat"
 
 known_units = {
 	"physical time"				  : Dim(T=1),
@@ -47,7 +51,12 @@ known_units = {
 	"timestep"					  : Dim(),
 	"OmegaFrame"				  : Dim(T=-1),
 	"LostMass"					  : Dim(M=1),
-	"FrameAngle"				  : Dim()
+	"FrameAngle"				  : Dim(),
+	"gasdens"					  : Dim(M=1, L=-2),
+	"gasenergy"					  : Dim(M=1, L=2, T=-2),
+	"gasvrad"					  : Dim(L=1, T=-1),
+	"gasvtheta"					  : Dim(L=1, T=-1),
+	"gastau"					  : Dim(Th=1)
 }
 
 default_units_fargo_twam = {
@@ -110,6 +119,18 @@ def parse_FargoTwam_grid(datadir, unitSys=None):
 	dphi = phi[1:] - phi[:-1]
 	phi = 0.5*(phi[1:] + phi[:-1])
 	return grid.SphericalRegularGrid(r=r, dr=dr, phi=phi, dphi=dphi)
+
+class FargoTwamField(Field):
+	def __init__(self, *args, unitSys=None, **kwargs):
+		super().__init__(*args, **kwargs)
+		self.unitSys = unitSys
+
+	def load(self):
+		self.data = np.fromfile(self.resource).reshape(self.grid.shape).transpose()
+		if self.unitSys is not None and self.name is not None:
+			self.data *= self.unitSys.find(self.name)
+		if self.unitSys is not None and self.name == 'gasdens' and self.grid.dim == 2:
+			self.data *= self.unitSys['L']
 
 class ScalarTimeSeries(TimeSeries):
 	def __init__(self, time=None, data=None, datafile=None, name = None, unitSys = None):
@@ -185,6 +206,22 @@ class FargoTwamParticle(Particle):
 				data = np.genfromtxt(self.resource[v])[:,1]
 				self.data[v] = data*self.unitSys['L']*self.unitSys['T']**(-2)
 
+class FieldTimeSeries(TimeSeries):
+	def __init__(self, name, resource, time, grid, unitSys=None):
+		super().__init__(name, resource)
+		self.time = time
+		self.data = []
+		self.unitSys = unitSys
+		for f in self.resource:
+			self.data.append(FargoTwamField(name, grid=grid, resource=f, unitSys=unitSys))
+
+	def get(self, varname, n = None ):
+		self.load(n)
+		return self.__dict__[varname][n]
+
+	def load(self, n):
+		self.data[n].load()
+
 class FargoTwamDataset(AbstractDataset):
 	def __init__(self, rootdir):
 		super().__init__()
@@ -194,10 +231,12 @@ class FargoTwamDataset(AbstractDataset):
 		for key in known_units:
 			self.units.register(key, known_units[key])
 		self.find_grids()
+		self.find_times()
 		self.find_datafiles()
 		self.find_scalars()
 		self.find_collections()
 		self.find_particles()
+		self.find_fields()
 
 	def find_datadir(self):
 		# Look for an output dir inside the rootdir
@@ -251,3 +290,30 @@ class FargoTwamDataset(AbstractDataset):
 						self.particles[name] = FargoTwamParticle(name, resource=fpath, unitSys=self.units)
 					else:
 						self.particles[name].add_resource(fpath)
+
+	def find_times(self):
+		for name in time_files:
+			fpath = os.path.join(self.datadir, time_files[name])
+			if time_files[name] in os.listdir(self.datadir):
+				if name == "fine":
+					data = np.genfromtxt(fpath)[:,0]*self.units['T']
+				elif name == "coarse":
+					data = np.genfromtxt(fpath)[:,1]*self.units['T']
+				else:
+					raise ValueError("Don't know how to parse time info for '{}'".format(time_files[name]))
+				self.times[name] = Time(data=data)
+
+	def find_fields(self):
+		matches = [m for m in (re.match(field_pattern, f) for f in self.datafiles) if m is not None]
+		fields = {}
+		for m in matches:
+			name, nr = m.groups()
+			if name not in fields:
+				fields[name] = [m]
+			else:
+				fields[name].append(m)
+		for name in fields:
+			fields[name] = sorted(fields[name], key=lambda item: item.groups()[1])
+			files = [os.path.join(self.datadir,m.string) for m in fields[name]]
+			self.fields[name] = FieldTimeSeries(name, files, self.times['coarse'],
+												self.grids['full'], unitSys=self.units)
