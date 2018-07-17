@@ -55,8 +55,7 @@ known_units = {
 	"gasdens"					  : Dim(M=1, L=-2),
 	"gasenergy"					  : Dim(M=1, L=2, T=-2),
 	"gasvrad"					  : Dim(L=1, T=-1),
-	"gasvtheta"					  : Dim(L=1, T=-1),
-	"gastau"					  : Dim(Th=1)
+	"gasvtheta"					  : Dim(L=1, T=-1)
 }
 
 default_units_fargo_twam = {
