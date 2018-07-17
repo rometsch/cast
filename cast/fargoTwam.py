@@ -8,6 +8,7 @@
 from .dataset import *
 from . import units
 from .units import Dimension as Dim
+from . import grid
 import re
 import os
 import numpy as np
@@ -82,6 +83,33 @@ def parse_fargo_twam_header(header):
 		if name in ['physical time']:
 			timecol = n
 	return names, timecol
+
+def centered_coordinates(xInterface):
+    x = 0.5*(xInterface[1:] + xInterface[:-1])
+    dx = xInterface[1:] - xInterface[:-1]
+    return (x, dx)
+
+def parse_FargoTwam_grid(datadir, unitSys=None):
+	fpath = os.path.join(datadir, "used_rad.dat")
+	rInterface = np.genfromtxt(fpath)
+
+	Nr = len(rInterface)-1
+	r, dr = centered_coordinates(rInterface)
+	r = r*unitSys['L']
+	dr = dr*unitSys['L']
+
+	# Get the number of azimuthal cells by dividing the total file size
+	# of the first gas density output by Nr and 8 (=1 byte)
+	# to obtain the number azimuthal of azimutal cells.
+	Nphi = os.path.getsize(os.path.join(datadir, "gasdens0.dat"))/Nr/8
+	if (Nphi%1 != 0):
+		raise ValueError("Caclulated number of azimuthal cells is not an integer!")
+	else:
+		Nphi = int(Nphi)
+	phi = np.linspace(0, 2*np.pi, Nphi+1)
+	dphi = phi[1:] - phi[:-1]
+	phi = 0.5*(phi[1:] + phi[:-1])
+	return grid.SphericalRegularGrid(r=r, dr=dr, phi=phi, dphi=dphi)
 
 class ScalarTimeSeries(TimeSeries):
 	def __init__(self, time=None, data=None, datafile=None, name = None, unitSys = None):
@@ -165,6 +193,7 @@ class FargoTwamDataset(AbstractDataset):
 		self.units = units.parse_code_units_file(self.rootdir, defaults=default_units_fargo_twam)
 		for key in known_units:
 			self.units.register(key, known_units[key])
+		self.find_grids()
 		self.find_datafiles()
 		self.find_scalars()
 		self.find_collections()
@@ -172,11 +201,10 @@ class FargoTwamDataset(AbstractDataset):
 
 	def find_datadir(self):
 		# Look for an output dir inside the rootdir
-		for dirname, dirnames, filenames in os.walk(self.rootdir):
-			for subdirname in dirnames:
-				path = os.path.join(dirname, subdirname)
-				if all(s in os.listdir(path) for s in outputdir_indicators):
-					self.datadir = path
+		self.datadir = find_dir_containing(outputdir_indicators, self.rootdir)
+
+	def find_grids(self):
+		self.grids["full"] = parse_FargoTwam_grid(self.datadir, unitSys=self.units)
 
 	def find_datafiles(self):
 		""" Search the datadir for datafiles."""
