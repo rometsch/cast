@@ -1,7 +1,7 @@
 #----------------------------------------------------------------------
 #	A dataset wrapper for fargo3d simulations
 #
-#	Author 	: Thomas Rometsch (thomas.rometsch@uni-tuebingen.de)
+#	Author	: Thomas Rometsch (thomas.rometsch@uni-tuebingen.de)
 #	Date	: 2018-07-10
 #----------------------------------------------------------------------
 
@@ -66,9 +66,9 @@ def parse_text_header_v1(header):
 	return names, timecol
 
 def centered_coordinates(xInterface):
-    x = 0.5*(xInterface[1:] + xInterface[:-1])
-    dx = xInterface[1:] - xInterface[:-1]
-    return (x, dx)
+	x = 0.5*(xInterface[1:] + xInterface[:-1])
+	dx = xInterface[1:] - xInterface[:-1]
+	return (x, dx)
 
 def parse_Fargo3d_grid(datadir, unitSys=None):
 	fpath = os.path.join(datadir, "dimensions.dat")
@@ -98,24 +98,24 @@ def parse_Fargo3d_grid(datadir, unitSys=None):
 	return grid.SphericalRegularGrid(**domain_data)
 
 class ScalarTimeSeries(TimeSeries):
-    def __init__(self, time=None, data=None, datafile=None, name = None, unitSys = None):
-        self.time = time
-        self.data = data
-        self.datafile = datafile
-        self.name = name
-        self.unitSys = unitSys
+	def __init__(self, time=None, data=None, datafile=None, name = None, unitSys = None):
+		self.time = time
+		self.data = data
+		self.datafile = datafile
+		self.name = name
+		self.unitSys = unitSys
 
-    def load(self, *args, **kwargs):
-        data = np.genfromtxt(self.datafile)
-        self.time = data[:,0]
+	def load(self, *args, **kwargs):
+		data = np.genfromtxt(self.datafile)
+		self.time = data[:,0]
 
-        for n in range(1, data.shape[1]):
-            self.data = data[:,1]
+		for n in range(1, data.shape[1]):
+			self.data = data[:,1]
 
-        if self.unitSys is not None:
-            self.time *= self.unitSys['time']
-            if self.name is not None:
-                self.data *= self.unitSys.find(self.name)
+		if self.unitSys is not None:
+			self.time *= self.unitSys['time']
+			if self.name is not None:
+				self.data *= self.unitSys.find(self.name)
 
 class Fargo3dParticle(Particle):
 	def __init__(self, name, resource=None, unitSys=None):
@@ -162,7 +162,7 @@ class Fargo3dParticle(Particle):
 				self.data[name] = data[:,k]
 
 			self.data["time"] *= self.unitSys['T']
-			self.data["a"]    *= self.unitSys['L']
+			self.data["a"]	  *= self.unitSys['L']
 			for v in ["MeanAnomaly", "TrueAnomaly"]:
 				self.data[v]	*= self.unitSys['T']**(-1)
 
@@ -171,33 +171,18 @@ class Fargo3dParticle(Particle):
 				data = np.genfromtxt(self.resource[v])[:,1]
 				self.data[v] = data*self.unitSys['L']*self.unitSys['T']**(-2)
 
-class FieldTimeSeries(TimeSeries):
-	def __init__(self, name, resource, time, grid, unitSys=None):
-		super().__init__(name, resource)
-		self.time = time
-		self.data = []
-		self.unitSys = unitSys
-		for f in self.resource:
-			self.data.append(Fargo3dField(name, grid=grid, resource=f, unitSys=unitSys))
-
-	def get(self, varname, n = None ):
-		self.load(n)
-		return self.__dict__[varname][n]
-
-	def load(self, n):
-		self.data[n].load()
-
 class Fargo3dField(Field):
 	def __init__(self, *args, unitSys=None, **kwargs):
 		super().__init__(*args, **kwargs)
 		self.unitSys = unitSys
 
 	def load(self):
-		self.data = np.fromfile(self.resource).reshape(self.grid.shape).transpose()
-		if self.unitSys is not None and self.name is not None:
-			self.data *= self.unitSys.find(self.name)
-		if self.unitSys is not None and self.name == 'gasdens' and self.grid.dim == 2:
-			self.data *= self.unitSys['L']
+		if self.data is None:
+			self.data = np.fromfile(self.resource).reshape(self.grid.shape).transpose()
+			if self.unitSys is not None and self.name is not None:
+				self.data *= self.unitSys.find(self.name)
+			if self.unitSys is not None and self.name == 'gasdens' and self.grid.dim == 2:
+				self.data *= self.unitSys['L']
 
 
 class Fargo3dDataset(AbstractDataset):
@@ -292,4 +277,5 @@ class Fargo3dDataset(AbstractDataset):
 			fields[name] = sorted(fields[name], key=lambda item: item.groups()[1])
 			files = [os.path.join(self.datadir,m.string) for m in fields[name]]
 			self.fields[name] = FieldTimeSeries(name, files, self.times['coarse'],
-												self.grids['full'], unitSys=self.units)
+												self.grids['full'], unitSys=self.units,
+												Field = Fargo3dField)

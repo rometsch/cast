@@ -160,3 +160,20 @@ class TimeSeries:
 
 	def data(self, n = None ):
 		return self.get('data', n=n)
+
+
+class FieldTimeSeries(TimeSeries):
+	def __init__(self, name, resource, time, grid, unitSys=None, Field=Field):
+		super().__init__(name, resource)
+		self.time = time
+		self.data = []
+		self.unitSys = unitSys
+		for f in self.resource:
+			self.data.append(Field(name, grid=grid, resource=f, unitSys=unitSys))
+
+	def get(self, varname, n = None ):
+		self.load(n)
+		return self.__dict__[varname][n]
+
+	def load(self, n):
+		self.data[n].load()
