@@ -125,11 +125,12 @@ class FargoTwamField(Field):
 		self.unitSys = unitSys
 
 	def load(self):
-		self.data = np.fromfile(self.resource).reshape(self.grid.shape).transpose()
-		if self.unitSys is not None and self.name is not None:
-			self.data *= self.unitSys.find(self.name)
-		if self.unitSys is not None and self.name == 'gasdens' and self.grid.dim == 2:
-			self.data *= self.unitSys['L']
+		if self.data is None:
+			self.data = np.fromfile(self.resource).reshape(self.grid.shape).transpose()
+			if self.unitSys is not None and self.name is not None:
+				self.data *= self.unitSys.find(self.name)
+			if self.unitSys is not None and self.name == 'gasdens' and self.grid.dim == 2:
+				self.data *= self.unitSys['L']
 
 class ScalarTimeSeries(TimeSeries):
 	def __init__(self, time=None, data=None, datafile=None, name = None, unitSys = None):
