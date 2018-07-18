@@ -151,5 +151,5 @@ class UnitSystem:
 			rv = 1
 
 		if not (isinstance(rv, u.core.UnitBase) or rv == 1):
-			raise TypeError("'{}' could not be cast to a unit.".format(un))
+			raise TypeError("'{}' could not be cast to a unit: result was '{}'.".format(un, rv))
 		return rv
