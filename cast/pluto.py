@@ -1,17 +1,19 @@
 #----------------------------------------------------------------------
 #	A dataset wrapper for pluto simulations
 #
-#	Author 	: Thomas Rometsch (thomas.rometsch@uni-tuebingen.de)
+#	Author	: Thomas Rometsch (thomas.rometsch@uni-tuebingen.de)
 #	Date	: 2018-07-12
 #----------------------------------------------------------------------
 
 from cast.dataset import *
 from . import units
+from . import grid
 from .units import Dimension as Dim
 import re
 import os
 import numpy as np
 import astropy.units
+from .pluload import pload
 
 
 """ Datafiles produced by pluto.
@@ -29,19 +31,18 @@ collections = ["analysis_values.dat"]
 particle_file_pattern = []
 
 known_units = {
-	"niter"    : Dim(),
+	"niter"	   : Dim(),
 	"M_DISK"   : Dim(M=1),
-	"KE_R"     : Dim(M=1, L=2, T=-2),
-	"KE_TH"    : Dim(M=1, L=2, T=-2),
+	"KE_R"	   : Dim(M=1, L=2, T=-2),
+	"KE_TH"	   : Dim(M=1, L=2, T=-2),
 	"KE_PHI"   : Dim(M=1, L=2, T=-2),
 	"RHO_MIN"  : Dim(M=1, L=-3),
 	"RHO_MAX"  : Dim(M=1, L=-3),
-	"J_DISK_0" : Dim(M=1, L=2, T=-1),
-	"J_DISK_1" : Dim(M=1, L=2, T=-1),
-	"J_DISK_2" : Dim(M=1, L=2, T=-1),
-	"F_0"      : Dim(M=1, L=1, T=-2),
-	"F_1"      : Dim(M=1, L=1, T=-2),
-	"F_2"      : Dim(M=1, L=1, T=-2)
+	"J_DISK_." : Dim(M=1, L=2, T=-1),
+	"F_."	   : Dim(M=1, L=1, T=-2),
+	"rho"	   : Dim(M=1, L=-3),
+	"prs"	   : Dim(M=1, L=-1, T=-2),
+	"vx."	   : Dim(L=1, T=-1)
 }
 
 def find_pluto_log(rootdir):
@@ -50,7 +51,6 @@ def find_pluto_log(rootdir):
 	except FileNotFoundError:
 		#rv = None
 		raise
-	print(rv)
 	return rv
 
 def extract_pluto_log_units(datadir):
@@ -61,7 +61,7 @@ def extract_pluto_log_units(datadir):
 		foundUnits = {}
 		with open(fpath, 'r') as f:
 			for l in f:
-				# match to lines like: [Density]:      4.249e-09 (gr/cm^3), 2.540e+15 (1/cm^3)
+				# match to lines like: [Density]:	   4.249e-09 (gr/cm^3), 2.540e+15 (1/cm^3)
 				rs = re.match("\s*\[(\w+)\]\:\s*([0-9\.e\-\+]+).*\((.+)\)",l.split(',')[0].strip())
 				if rs:
 					rs = rs.groups()
@@ -101,16 +101,21 @@ def parse_text_header_pluto(header):
 			timecol = n
 	return names, timecol
 
-class ScalarTimeSeries(TimeSeries):
-    def __init__(self, time=None, data=None, datafile=None, name = None, unitSys = None):
-        self.time = time
-        self.data = data
-        self.datafile = datafile
-        self.name = name
-        self.unitSys = unitSys
+def pload_to_grid(pl, unitSys = {'L' : 1}):
+	if pl.geometry != "SPHERICAL":
+		raise NotImplementedError("No grid implemented for '{}' geometry.".format(pl.geometry))
+	return grid.SphericalRegularGrid(r=pl.x1*unitSys['L'], dr=pl.dx1*unitSys['L'], theta=pl.x2, dtheta=pl.dx2, phi=pl.x3, dphi=pl.dx3 )
 
-    def load(self, *args, **kwargs):
-        pass
+class ScalarTimeSeries(TimeSeries):
+	def __init__(self, time=None, data=None, datafile=None, name = None, unitSys = None):
+		self.time = time
+		self.data = data
+		self.datafile = datafile
+		self.name = name
+		self.unitSys = unitSys
+
+	def load(self, *args, **kwargs):
+		pass
 
 class PlutoParticle(Particle):
 	def __init__(self, name, resource=None, unitSys=None):
@@ -128,6 +133,7 @@ class PlutoDataset(AbstractDataset):
 		self.find_scalars()
 		self.find_collections()
 		self.find_particles()
+		self.find_fields()
 
 	def find_datadir(self):
 		# Look for an output dir inside the rootdir
@@ -176,3 +182,51 @@ class PlutoDataset(AbstractDataset):
 						self.particles[name] = PlutoParticle(name, resource=fpath, unitSys=self.units)
 					else:
 						self.particles[name].add_resource(fpath)
+
+	def find_fields(self):
+		output_numbers = []
+		time = []
+		with open(os.path.join(self.datadir, 'dbl.out')) as f:
+			got_names = False
+			for l in f:
+				parts = l.strip().split()
+				if not got_names:
+					var_names = parts[6:]
+					got_names = True
+				output_numbers.append(int(parts[0]))
+				time.append(float(parts[1]))
+
+		self.times['coarse'] = Time(data = time*self.units['T'])
+		datafiles = [[int(m.groups()[0]), m.string]
+					  for m in (re.match("data\.(\d*)\.dbl", s)
+								for s in os.listdir(self.datadir)) if m is not None]
+		datafiles = sorted( datafiles, key=lambda item: item[0])
+		# Get grid data from first output
+		pl = pload(datafiles[0][0], self.datadir)
+		self.grids['full'] = pload_to_grid(pl, self.units)
+		self._field_resource = [ [f, None] for f in (os.path.join(self.datadir, s) for s in (l[1] for l in datafiles))]
+		self._field_resource[0][1] = pl
+		for name in var_names:
+			self.fields[name] = FieldTimeSeries(name, self._field_resource, self.times['coarse'],
+												self.grids['full'], unitSys=self.units,
+												Field = PlutoField)
+
+
+class PlutoField(Field):
+	def __init__(self, *args, unitSys=None, **kwargs):
+		super().__init__(*args, **kwargs)
+		self.unitSys = unitSys
+
+	def load(self):
+		if self.data is None:
+			if self.resource[1] is None:
+				self.resource[1] = self.pload()
+			self.data = self.resource[1].__dict__[self.name]
+			if self.unitSys is not None and self.name is not None:
+				self.data *= self.unitSys.find(self.name)
+			if self.unitSys is not None and self.name == 'rho' and self.grid.dim == 2:
+				self.data *= self.unitSys['L']
+
+	def pload(self):
+		output_number = int(re.match("data\.(\d+)\.dbl", os.path.basename(self.resource[0])).groups()[0])
+		return pload(output_number, os.path.dirname(self.resource[0]))
