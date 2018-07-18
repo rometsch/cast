@@ -35,11 +35,11 @@ particle_file_pattern = ["bigplanet(\d+)\.dat", "orbit(\d+)\.dat", "a._planet_(\
 field_pattern = "([a-z]*[A-Z]*)([0-9]+)\.dat"
 
 known_units = {
-	'mass' : Dim(['M'], [1]),
-	'mom.' : Dim(['M', 'L', 'T'], [1, 2, -1]),
-	'gasdens' : Dim(['M', 'L'], [1, -3]),
-	'gasv.' : Dim(['L', 'T'], [1, -1]),
-	'gasenergy' : Dim(['M', 'L', 'T'], [1, 2, -2])
+	'mass' : Dim(M=1),
+	'mom.' : Dim(M=1, L=2, T=-1),
+	'gasdens' : Dim(M=1, L=-3),
+	'gasv.' : Dim(L=1, T=-1),
+	'gasenergy' : Dim(M=1, L=2, T=-2)
 }
 
 def parse_text_header(fpath):
@@ -180,9 +180,9 @@ class Fargo3dField(Field):
 		if self.data is None:
 			self.data = np.fromfile(self.resource).reshape(self.grid.shape).transpose()
 			if self.unitSys is not None and self.name is not None:
-				self.data *= self.unitSys.find(self.name)
+				self.data = self.data*self.unitSys.find(self.name)
 			if self.unitSys is not None and self.name == 'gasdens' and self.grid.dim == 2:
-				self.data *= self.unitSys['L']
+				self.data = self.data*self.unitSys['L']
 
 
 class Fargo3dDataset(AbstractDataset):
