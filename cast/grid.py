@@ -62,7 +62,12 @@ class AbstractGrid:
         self.dV = self["dV" + self.dim_labels[0]]
         for n in range(1,self.dim):
             l = self.dim_labels[n]
-            self.dV = np.repeat( np.expand_dims(self.dV, n), self["N"+l], axis=n)*self["dV"+l]
+            try:
+                unit = self.dV.unit
+            except AttributeError:
+                unit = 1
+            self.dV = np.repeat( np.expand_dims(self.dV, n), self["N"+l], axis=n)*self["dV"+l]*unit
+
 
     def _check_limit(self, name, lim):
         if name in self.__dict__:
