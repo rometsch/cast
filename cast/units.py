@@ -80,8 +80,12 @@ class Dimension:
 
 def parse_code_units_file(datadir, defaults = defaults):
 	cu = {}
+	for fname in ['units.inf', 'units.dat']:
+		if fname in os.listdir(datadir):
+			fpath = os.path.join(datadir, fname)
+			break
 	try:
-		with open( os.path.join(datadir, 'units.inf')) as unitfile:
+		with open(fpath) as unitfile:
 			for l in unitfile:
 				l = l.strip()
 				if l[0] == "#":
@@ -91,7 +95,7 @@ def parse_code_units_file(datadir, defaults = defaults):
 				if l[1] in ignore_chars or l[2] in ignore_chars:
 					continue
 				cu[l[0]] = l[1:]
-	except OSError:
+	except (AttributeError, OSError):
 		print("Warning: Could not find output baseunits in '{}'".format(datadir))
 		pass
 	return UnitSystem(cu, defaults=defaults)
