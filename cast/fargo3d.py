@@ -218,7 +218,7 @@ class Fargo3dDataset(AbstractDataset):
 		for s in scalar_files:
 			if s in self.datafiles:
 				name = s[:-4]
-				self.timeSeries[name] = ScalarTimeSeries(os.path.join(self.datadir, s)
+				self.timeSeries[name] = ScalarTimeSeries(resource = os.path.join(self.datadir, s)
 														 , name=name, unitSys=self.units)
 
 	def find_collections(self):
