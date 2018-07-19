@@ -21,14 +21,13 @@ def find_dir_containing(patterns, rootdir):
 				return path
 	raise FileNotFoundError("Could not find a directory with files matching the patterns '{}' in the (sub)directories of '{}'".format(patterns, rootdir))
 
-
 code_identifiers = {
 	'fargoTwam' : 'misc.dat',
 	'fargo3d' : 'fargo3d.h',
 	'pluto' : 'pluto.log'
 	}
 
-def Dataset(root):
+def Dataset(root='.'):
 	# A wrapper to determine the correct class
 	code = None
 	for dirname, dirnames, filenames in os.walk(root):
