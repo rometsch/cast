@@ -102,9 +102,15 @@ def parse_text_header_pluto(header):
 	return names, timecol
 
 def pload_to_grid(pl, unitSys = {'L' : 1}):
-	if pl.geometry != "SPHERICAL":
+	if pl.geometry == "SPHERICAL":
+		return grid.SphericalRegularGrid(r=pl.x1*unitSys['L'], dr=pl.dx1*unitSys['L'],
+										 theta=pl.x2, dtheta=pl.dx2,
+										 phi=pl.x3, dphi=pl.dx3 )
+	elif pl.geometry == "POLAR":
+		return grid.PolarRegularGrid(r=pl.x1*unitSys['L'], dr=pl.dx1*unitSys['L'],
+										 phi=pl.x3, dphi=pl.dx3 )
+	else:
 		raise NotImplementedError("No grid implemented for '{}' geometry.".format(pl.geometry))
-	return grid.SphericalRegularGrid(r=pl.x1*unitSys['L'], dr=pl.dx1*unitSys['L'], theta=pl.x2, dtheta=pl.dx2, phi=pl.x3, dphi=pl.dx3 )
 
 class ScalarTimeSeries(TimeSeries):
 	def __init__(self, time=None, data=None, datafile=None, name = None, unitSys = None):
