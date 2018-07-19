@@ -257,9 +257,9 @@ class Fargo3dDataset(AbstractDataset):
 			fpath = os.path.join(self.datadir, time_files[name])
 			if time_files[name] in os.listdir(self.datadir):
 				if name == "fine":
-					data = np.genfromtxt(fpath)[:,3]*self.units['T']
+					data = np.genfromtxt(fpath, usecols=(3))*self.units['T']
 				elif name == "coarse":
-					data = np.genfromtxt(fpath)[:,2]*self.units['T']
+					data = np.genfromtxt(fpath, usecols=(2))*self.units['T']
 				else:
 					raise ValueError("Don't know how to parse time info for '{}'".format(time_files[name]))
 				self.times[name] = Time(data=data)
