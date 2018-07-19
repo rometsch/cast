@@ -119,17 +119,53 @@ class SphericalRegularGrid(AbstractGrid):
 
     def meshgrid(self):
         if self.dim == 1:
-            return np.meshgrid( self.r )
+            return np.meshgrid( self.r-self.dr/2 )
         elif self.dim == 2:
-            R, Phi = np.meshgrid( self.r, self.phi )
+            R, Phi = np.meshgrid( self.r-self.dr/2, self.phi-self.dphi/2 )
             X = R*np.cos(Phi)
             Y = R*np.sin(Phi)
             return (X,Y)
         elif self.dim == 3:
-            R, Theta, Phi = np.meshgrid( self.r, self.theta, self.phi )
+            R, Theta, Phi = np.meshgrid( self.r-self.dr/2, self.theta-self.dtheta/2, self.phi-self.dphi/2 )
             X = R*np.cos(Phi)*np.sin(Theta)
             Y = R*np.sin(Phi)*np.sin(Theta)
             Z = R*np.cos(Theta)
             return np.meshgrid( X, Y, Z )
+        else:
+            raise ValueError("Can not construct meshgrid for dim = {}".format(self.dim))
+
+class PolarRegularGrid(AbstractGrid):
+    def __init__(self, **kwargs):
+        super().__init__(domains_expected = ["r", "phi"],
+                         limits = [[0, np.inf], [0, 2*np.pi]],
+                         **kwargs)
+        if "r" not in self.__dict__:
+            raise ValueError("Can't have a polar grid without radius.")
+
+    def _V(self):
+        self.V = np.sum(self["dV"])
+
+    def _dVr(self):
+        r = self.r
+        dr = self.dr
+        self.dVr = ( (r+dr/2)**3 - (r-dr/2)**3 )/3
+
+    def _dVphi(self):
+        try:
+            if len(self.dphi) == self.Nphi:
+                self.dVphi = self.dphi
+            else:
+                raise ValueError("dphi has len = {} instead of {}".format(len(self.dphi), self.Nphi))
+        except TypeError:
+            self.dVphi = np.ones(self.Nphi)*self.dphi
+
+    def meshgrid(self):
+        if self.dim == 1:
+            return np.meshgrid( self.r-self.dr/2 )
+        elif self.dim == 2:
+            R, Phi = np.meshgrid( self.r-self.dr/2, self.phi-self.dphi/2 )
+            X = R*np.cos(Phi)
+            Y = R*np.sin(Phi)
+            return (X,Y)
         else:
             raise ValueError("Can not construct meshgrid for dim = {}".format(self.dim))
