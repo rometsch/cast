@@ -148,7 +148,7 @@ class PolarRegularGrid(AbstractGrid):
     def _dVr(self):
         r = self.r
         dr = self.dr
-        self.dVr = ( (r+dr/2)**3 - (r-dr/2)**3 )/3
+        self.dVr = 0.5*( (r+dr/2)**2 - (r-dr/2)**2 )
 
     def _dVphi(self):
         try:
