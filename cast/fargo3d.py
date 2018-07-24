@@ -142,36 +142,43 @@ class Fargo3dParticle(Particle):
 			data = np.genfromtxt(self.resource["planet"])
 			names = ["TimeStep", "x1", "x2", "x3", "v1",
 					 "v2", "v3", "mass", "time", "OmegaFrame"]
+			units_dict = {
+				"x1" : self.unitSys['L'],
+				"x2" : self.unitSys['L'],
+				"x3" : self.unitSys['L'],
+				"v1" : self.unitSys['L']/self.unitSys['T'],
+				"v2" : self.unitSys['L']/self.unitSys['T'],
+				"v3" : self.unitSys['L']/self.unitSys['T'],
+				"mass" : self.unitSys['M'],
+				"OmegaFrame" : self.unitSys['T']**(-1)
+			}
+			self.data['time'] = data[:,8]*self.unitSys['T']
 			for k, name in enumerate(names):
-				self.data[name] = data[:,k]
+				if name == "time":
+					continue
+				unit = units_dict[name] if name in units_dict else 1
+				self.data[name] = ScalarTimeSeries(name = name, data = data[:,k]*unit, time = self.data['time'])
 
-			for v in ["x1", "x2", "x3"]:
-				self.data[v] *= self.unitSys['L']
-
-			for v in ["v1", "v2", "v3"]:
-				self.data[v] *= self.unitSys['L']/self.unitSys['T']
-
-			self.data["mass"] *= self.unitSys['M']
-			self.data["time"] *= self.unitSys['T']
-			self.data["OmegaFrame"] *= self.unitSys['T']**(-1)
 
 		if "orbit" in self.resource:
 			data = np.genfromtxt(self.resource["orbit"])
 			names = ["time", "e", "a", "MeanAnomaly",
 					 "TrueAnomaly", "Periastron", "XPosAngle",
 					 "i", "AscendingNode", "XYPerihelion"]
+			units_dict = {
+				"a" : self.unitSys['L']
+			}
 			for k, name in enumerate(names):
-				self.data[name] = data[:,k]
-
-			self.data["time"] *= self.unitSys['T']
-			self.data["a"]	  *= self.unitSys['L']
-			for v in ["MeanAnomaly", "TrueAnomaly"]:
-				self.data[v]	*= self.unitSys['T']**(-1)
+				if name == "time":
+					continue
+				unit = units_dict[name] if name in units_dict else 1
+				self.data[name] = ScalarTimeSeries(name = name, data = data[:,k]*unit, time = self.data['time'])
 
 		for v in ["ax", "ay", "az"]:
+			unit = self.unitSys['L']*self.unitSys['T']**(-2)
 			if v in self.resource:
 				data = np.genfromtxt(self.resource[v])[:,1]
-				self.data[v] = data*self.unitSys['L']*self.unitSys['T']**(-2)
+				self.data[v] = ScalarTimeSeries(name = name, data = data*unit, time = self.data['time'])
 
 class Fargo3dField(Field):
 	def __init__(self, *args, unitSys=None, **kwargs):
@@ -220,7 +227,7 @@ class Fargo3dDataset(AbstractDataset):
 		for s in scalar_files:
 			if s in self.datafiles:
 				name = s[:-4]
-				self.timeSeries[name] = ScalarTimeSeries(resource = os.path.join(self.datadir, s)
+				self.timeSeries[name] = ScalarTimeSeries(datafile = os.path.join(self.datadir, s)
 														 , name=name, unitSys=self.units)
 
 	def find_collections(self):
