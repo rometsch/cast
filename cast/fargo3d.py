@@ -99,8 +99,10 @@ def parse_Fargo3d_grid(datadir, unitSys=None):
 
 class ScalarTimeSeries(TimeSeries):
 	def __init__(self, time=None, data=None, datafile=None, name = None, unitSys = None):
-		self.time = time
-		self.data = data
+		if time is not None:
+			self.time = time
+		if data is not None:
+			self.data = data
 		self.datafile = datafile
 		self.name = name
 		self.unitSys = unitSys
