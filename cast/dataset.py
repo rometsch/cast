@@ -127,8 +127,11 @@ class TimeSeries:
 	""" Stucture to hold data at different points in time.
 	The data can be scalar variables or fields defined on a grid
 	for each point in time. """
-	def __init__(self, name, resource = None):
+	def __init__(self, name, resource = None, time = None, data = None):
 		self.name = name
+		if time is not None and data is not None:
+			self.__dict__['data'] = data
+			self.__dict__['time'] = time
 		self.resource = resource
 
 	def load(self, varname = None, n=None ):
