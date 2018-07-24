@@ -94,10 +94,10 @@ class Time:
 		return np.argmin(np.abs(self.data-t))
 
 class Particle:
-	def __init__(self, name=None, resource=None, data={}):
+	def __init__(self, name=None, resource=None, data=None):
 		self.name = name
 		self.resource = resource
-		self.data = data
+		self.data = None if data is not None else {}
 
 	def load(self, varname = None, n=None ):
 		raise NotImplementedError("load function of abstract class called. Need to define this function for the codespecific dataset")
