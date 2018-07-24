@@ -175,36 +175,44 @@ class FargoTwamParticle(Particle):
 			data = np.genfromtxt(self.resource["planet"])
 			names = ["TimeStep", "x1", "x2", "x3", "v1",
 					 "v2", "v3", "mass", "time", "OmegaFrame"]
+			units_dict = {
+				"x1" : self.unitSys['L'],
+				"x2" : self.unitSys['L'],
+				"x3" : self.unitSys['L'],
+				"v1" : self.unitSys['L']/self.unitSys['T'],
+				"v2" : self.unitSys['L']/self.unitSys['T'],
+				"v3" : self.unitSys['L']/self.unitSys['T'],
+				"mass" : self.unitSys['M'],
+				"OmegaFrame" : self.unitSys['T']**(-1)
+			}
+			self.data['time'] = data[:,8]*self.unitSys['T']
 			for k, name in enumerate(names):
-				self.data[name] = data[:,k]
+				if name == "time":
+					continue
+				unit = units_dict[name] if name in units_dict else 1
+				self.data[name] = ScalarTimeSeries(name = name, data = data[:,k]*unit, time = self.data['time'])
 
-			for v in ["x1", "x2", "x3"]:
-				self.data[v] = self.data[v]*self.unitSys['L']
 
-			for v in ["v1", "v2", "v3"]:
-				print(self.data[v])
-				self.data[v] = self.data[v]*self.unitSys['L']*self.unitSys['T']**(-1)
-
-			self.data["mass"] = self.data["mass"]*self.unitSys['M']
-			self.data["time"] = self.data["time"]*self.unitSys['T']
-			self.data["OmegaFrame"] = self.data["OmegaFrame"]*self.unitSys['T']**(-1)
 
 		if "orbit" in self.resource:
 			data = np.genfromtxt(self.resource["orbit"])
 			names = ["time", "e", "a", "MeanAnomaly",
 					 "TrueAnomaly", "Periastron"]
+			units_dict = {
+				"a" : self.unitSys['L']
+			}
+			self.data['time'] = data[:,8]*self.unitSys['T']
 			for k, name in enumerate(names):
-				self.data[name] = data[:,k]
-
-			self.data["time"] = self.data["time"]*self.unitSys['T']
-			self.data["a"]	  = self.data["a"]*self.unitSys['L']
-			for v in ["MeanAnomaly", "TrueAnomaly"]:
-				self.data[v]	= self.data[v]*self.unitSys['T']**(-1)
+				if name == "time":
+					continue
+				unit = units_dict[name] if name in units_dict else 1
+				self.data[name] = ScalarTimeSeries(name = name, data = data[:,k]*unit, time = self.data['time'])
 
 		for v in ["ax", "ay", "az"]:
+			unit = self.unitSys['L']*self.unitSys['T']**(-2)
 			if v in self.resource:
 				data = np.genfromtxt(self.resource[v])[:,1]
-				self.data[v] = data*self.unitSys['L']*self.unitSys['T']**(-2)
+				self.data[v] = ScalarTimeSeries(name = name, data = data*unit, time = self.data['time'])
 
 class FieldTimeSeries(TimeSeries):
 	def __init__(self, name, resource, time, grid, unitSys=None):
