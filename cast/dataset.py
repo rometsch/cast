@@ -141,7 +141,7 @@ class TimeSeries:
 		if isinstance(key, int):
 			return self.get('data', n=key)
 		else:
-			raise KeyError("Only integer indices are supported.")
+			raise KeyError("Only integer indices are supported but got n = '{}'.".format(key))
 
 	def get(self, varname, n = None ):
 		if n is None:
