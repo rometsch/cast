@@ -157,11 +157,16 @@ class TimeSeries:
 				self.load(varname, n)
 				return self.__dict__[varname][n]
 
-	def time(self, n = None):
+	def _time(self, n = None):
 		return self.get('time', n=n)
 
-	def data(self, n = None ):
+	def _data(self, n = None ):
 		return self.get('data', n=n)
+
+	def between(self, tmin = -np.inf, tmax = np.inf):
+		""" Extract time and data for the interval [tmin, tmax] """
+		mask = np.logical_and( self.__dict__['time'] >= tmin, self.__dict__['time'] <= tmax)
+		return (self._time(n = mask), self._data(n = mask))
 
 
 class FieldTimeSeries(TimeSeries):
