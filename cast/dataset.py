@@ -94,9 +94,10 @@ class Time:
 		return np.argmin(np.abs(self.data-t))
 
 class Particle:
-	def __init__(self, name=None, resource=None, data=None):
+	def __init__(self, name=None, resource=None, data=None, unitSys=None):
 		self.name = name
 		self.resource = resource
+		self.unitSys = unitSys
 		self.data = None if data is not None else {}
 
 	def load(self, varname = None, n=None ):
