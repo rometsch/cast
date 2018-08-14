@@ -1,6 +1,8 @@
 #+title: Common Astrophysics Simulation Toolbox
 #+author: Thomas Rometsch
 
+#+FILETAGS: :cast:
+
 * Intro
 
 A collection of my python tools to manage and analyze astophysics simulations.
@@ -10,3 +12,22 @@ A collection of my python tools to manage and analyze astophysics simulations.
 ** Datasets
 
 A sketch of a dataset class/interface can be found in [[file:notes/dataset.org]]
+
+* Supported codes
+
+** Fargo3d :fargo3d:
+
+*** TODO list features
+
+** FargoTwam :fargoTwam:
+
+*** TODO list features
+
+** PLUTO :pluto:
+
+*** TODO list features
+
+*** TODO finish implementing particle wrapper
+SCHEDULED: <2018-08-13 Mo>
+
+write load function

@@ -40,6 +40,7 @@ known_units = {
     "RHO_MAX"  : Dim(M=1, L=-3),
     "J_DISK_." : Dim(M=1, L=2, T=-1),
     "F_."      : Dim(M=1, L=1, T=-2),
+    "ACC_."    : Dim(L=1, T=-2),
     "rho"      : Dim(M=1, L=-3),
     "prs"      : Dim(M=1, L=-1, T=-2),
     "vx."      : Dim(L=1, T=-1)
