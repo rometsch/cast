@@ -98,7 +98,7 @@ class Particle:
 		self.name = name
 		self.resource = resource
 		self.unitSys = unitSys
-		self.data = None if data is not None else {}
+		self.data = data if data is not None else {}
 
 	def load(self, varname = None, n=None ):
 		raise NotImplementedError("load function of abstract class called. Need to define this function for the codespecific dataset")
