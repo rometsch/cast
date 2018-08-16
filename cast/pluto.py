@@ -12,7 +12,7 @@ from .units import Dimension as Dim
 import re
 import os
 import numpy as np
-import astropy.units
+import astropy.units as u
 from .pluload import pload
 
 
@@ -69,7 +69,7 @@ def extract_pluto_log_units(datadir):
                     name = rs[0]
                     value = rs[1]
                     unitstring = rs[2].replace('^', '').replace('gr','g').replace('sec', 's')
-                    foundUnits[rs[0]] = float(value)*astropy.units.Unit(unitstring)
+                    foundUnits[rs[0]] = float(value)*u.Unit(unitstring)
         baseunits = {
             "L" : foundUnits['Length'],
             "T" : foundUnits['Time'],
@@ -114,35 +114,78 @@ def pload_to_grid(pl, unitSys = {'L' : 1}):
         raise NotImplementedError("No grid implemented for '{}' geometry.".format(pl.geometry))
 
 def createPlutoParticles(datadir, unitSys):
-	# return a list of PlutoParticle objects for all present nbody particles
-	particleIds = plutoParticlesIds(datadir)
-	particles = {}
-	for i in particleIds:
-		particles[i] = Particle(name = i, unitSys=unitSys)
+    # return a list of PlutoParticle objects for all present nbody particles
+    particleIds = plutoParticlesIds(datadir)
+    particles = []
+    for i in particleIds:
+        particles.append(Particle(name = i, unitSys=unitSys, data={}))
 
-	# register the common load function
-	loadFunction = lambda : loadPlutoParticles(datadir, particles)
-	for i, p in particles.items():
-		p.load = loadFunction
+    # register the common load function
+    loadFunction = lambda : loadPlutoParticles(datadir, particles, unitSys)
+    for p in particles:
+        p.load = loadFunction
 
-	return particles
+    return { p.name : p for p in particles }
 
 def plutoParticlesIds(datadir):
-	with open(os.path.join(datadir, 'nbody_coordinates.dat'), 'r') as f:
-		# first, find the number of particles
-		ids = []
-		for l in f:
-			id = l.split()[0]
-			if not l in ids:
-				ids.append(l)
-			else:
-				break
-	return ids
+    with open(os.path.join(datadir, 'nbody_coordinates.dat'), 'r') as f:
+        # first, find the number of particles
+        ids = []
+        for l in f:
+            if l[0] == "#":
+                continue
+            pid = l.strip().split()[0]
+            if not pid in ids:
+                ids.append(pid)
+            else:
+                break
+    return ids
 
-def loadPlutoParticles(datadir, particles):
-	ids = [key for key in particles]
-	# TODO finish
+def loadPlutoParticles(datadir, particles, unitSys):
+    pids = [p.name for p in particles]
+    Nparticles = len(particles)
 
+    # load cartesian positions and velocities
+    data = np.genfromtxt(os.path.join(datadir, 'nbody_coordinates.dat'))
+    varNames = ['id', 'time', 'x', 'y', 'z', 'vx', 'vy', 'vz']
+    units = { 'id'   : 1,
+              'time' : unitSys['T'],
+              'x'    : unitSys['L'],
+              'y'    : unitSys['L'],
+              'z'    : unitSys['L'],
+              'vx'   : unitSys['L']/unitSys['T'],
+              'vy'   : unitSys['L']/unitSys['T'],
+              'vz'   : unitSys['L']/unitSys['T'] }
+
+    for n, p in enumerate(particles):
+        for k, name in enumerate(varNames):
+            if k == 1:
+                continue
+            p.data[name] = data[n::Nparticles, k]*units[name]
+
+    # load orbital elements
+    data = np.genfromtxt(os.path.join(datadir, 'nbody_orbital_elements.dat'))
+    varNames = ['id', 'time', 'a', 'e', 'i',
+                'AscendingNode', 'Pericenter', 'TrueAnomaly',
+                'PeriodInCodeUnits', 'EccentricAnomaly', 'MeanAnomaly']
+    units = { 'id'   : 1,
+              'time' : unitSys['T'],
+              'a'    : unitSys['L'],
+              'e'    : 1,
+              'i'    : u.rad,
+              'AscendingNode'     : u.rad,
+              'Pericenter'        : u.rad,
+              'TrueAnomaly'       : u.rad,
+              'PeriodInCodeUnits' : unitSys['T'],
+              'EccentricAnomaly'  : u.rad,
+              'MeanAnomaly'       : u.rad }
+
+    # orbital elements are not printed for the primary object
+    for n, p in enumerate(particles[1:]):
+        for k, name in enumerate(varNames):
+            if k == 1:
+                continue
+            p.data[name] = data[n::Nparticles, k]*units[name]
 
 class ScalarTimeSeries(TimeSeries):
     def __init__(self, time=None, data=None, datafile=None, name = None, unitSys = None):
@@ -226,8 +269,8 @@ class PlutoDataset(AbstractDataset):
             self.timeSeries[name] = ScalarTimeSeries(time = time, data = vardata, name = name)
 
     def find_particles(self):
-		if all([f in self.datafiles for f in particle_file_pattern]):
-			self.particles = loadPlutoParticles(self.datadir, self.units)
+        if all([f in self.datafiles for f in particle_file_pattern]):
+            self.particles = createPlutoParticles(self.datadir, self.units)
 
     def find_fields(self):
         output_numbers = []
