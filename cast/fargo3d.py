@@ -165,7 +165,14 @@ class Fargo3dParticle(Particle):
                      "TrueAnomaly", "Periastron", "XPosAngle",
                      "i", "AscendingNode", "XYPerihelion"]
             units_dict = {
-                "a" : self.unitSys['L']
+                "a" : self.unitSys['L'],
+                "i" : u.rad,
+                "AscendingNode"     : u.rad,
+                "Periastron"        : u.rad,
+                "TrueAnomaly"       : u.rad,
+                "EccentricAnomaly"  : u.rad,
+                "MeanAnomaly"       : u.rad,
+                "XYPerihelion"      : u.rad
             }
             for k, name in enumerate(names):
                 if name == "time":
