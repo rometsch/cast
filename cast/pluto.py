@@ -158,15 +158,16 @@ def loadPlutoParticles(datadir, particles, unitSys):
               'v3'   : unitSys['L']/unitSys['T'] }
 
     for n, p in enumerate(particles):
+        p.data['time'] = data[n::Nparticles, 1]*unitSys['T']
         for k, name in enumerate(varNames):
-            if k == 1:
+            if k <= 1:
                 continue
-            p.data[name] = data[n::Nparticles, k]*units[name]
+            p.data[name] = TimeSeries(name = name, data = data[n::Nparticles, k]*units[name], time=p.data['time'])
 
     # load orbital elements
     data = np.genfromtxt(os.path.join(datadir, 'nbody_orbital_elements.dat'))
     varNames = ['id', 'time', 'a', 'e', 'i',
-                'AscendingNode', 'Pericenter', 'TrueAnomaly',
+                'AscendingNode', 'Periastron', 'TrueAnomaly',
                 'PeriodInCodeUnits', 'EccentricAnomaly', 'MeanAnomaly']
     units = { 'id'   : 1,
               'time' : unitSys['T'],
