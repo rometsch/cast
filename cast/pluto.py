@@ -147,7 +147,7 @@ def loadPlutoParticles(datadir, particles, unitSys):
 
     # load cartesian positions and velocities
     data = np.genfromtxt(os.path.join(datadir, 'nbody_coordinates.dat'))
-    varNames = ['id', 'time', 'x', 'y', 'z', 'vx', 'vy', 'vz']
+    varNames = ['id', 'time', 'x1', 'x2', 'x3', 'v1', 'v2', 'v3']
     units = { 'id'   : 1,
               'time' : unitSys['T'],
               'x1'    : unitSys['L'],
