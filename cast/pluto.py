@@ -182,18 +182,20 @@ def loadPlutoParticles(datadir, particles, unitSys):
               'MeanAnomaly'       : u.rad }
 
     # orbital elements are not printed for the primary object
+    # load it for all others
     for n, p in enumerate(particles[1:]):
         for k, name in enumerate(varNames):
-            if k == 1:
+            if k <= 1:
                 continue
-            p.data[name] = data[n::Nparticles, k]*units[name]
+            p.data[name] = TimeSeries(name = name, data = data[n::Nparticles, k]*units[name], time=p.data['time'])
 
     with open(os.path.join(datadir, 'nbody.out'), 'r') as df:
         for n,line in zip(range(Nparticles) ,df):
             parts = line.strip().split()
             if int(parts[1]) != n:
                 raise ValueError("line {} does not correspond to planet {} but to {}".format(n,n,parts[1]))
-            particles[n].data['mass'] = float(parts[2])*unitSys['M']
+            mass = float(parts[2])*np.ones(len(particles[n].data['time']))*unitSys['M']
+            particles[n].data['mass'] = TimeSeries(name = 'mass', data = mass, time=particles[n].data['time'])
 
 
 
