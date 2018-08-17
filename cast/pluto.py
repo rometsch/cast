@@ -187,6 +187,15 @@ def loadPlutoParticles(datadir, particles, unitSys):
                 continue
             p.data[name] = data[n::Nparticles, k]*units[name]
 
+    with open(os.path.join(datadir, 'nbody.out'), 'r') as df:
+        for n,line in zip(range(Nparticles) ,df):
+            parts = line.strip().split()
+            if int(parts[1]) != n:
+                raise ValueError("line {} does not correspond to planet {} but to {}".format(n,n,parts[1]))
+            particles[n].data['mass'] = float(parts[2])*unitSys['M']
+
+
+
 class ScalarTimeSeries(TimeSeries):
     def __init__(self, time=None, data=None, datafile=None, name = None, unitSys = None):
         self.time = time
