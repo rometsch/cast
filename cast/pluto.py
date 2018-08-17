@@ -150,12 +150,12 @@ def loadPlutoParticles(datadir, particles, unitSys):
     varNames = ['id', 'time', 'x', 'y', 'z', 'vx', 'vy', 'vz']
     units = { 'id'   : 1,
               'time' : unitSys['T'],
-              'x'    : unitSys['L'],
-              'y'    : unitSys['L'],
-              'z'    : unitSys['L'],
-              'vx'   : unitSys['L']/unitSys['T'],
-              'vy'   : unitSys['L']/unitSys['T'],
-              'vz'   : unitSys['L']/unitSys['T'] }
+              'x1'    : unitSys['L'],
+              'x2'    : unitSys['L'],
+              'x3'    : unitSys['L'],
+              'v1'   : unitSys['L']/unitSys['T'],
+              'v2'   : unitSys['L']/unitSys['T'],
+              'v3'   : unitSys['L']/unitSys['T'] }
 
     for n, p in enumerate(particles):
         for k, name in enumerate(varNames):
