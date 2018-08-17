@@ -174,7 +174,7 @@ def loadPlutoParticles(datadir, particles, unitSys):
               'e'    : 1,
               'i'    : u.rad,
               'AscendingNode'     : u.rad,
-              'Pericenter'        : u.rad,
+              'Periastron'        : u.rad,
               'TrueAnomaly'       : u.rad,
               'PeriodInCodeUnits' : unitSys['T'],
               'EccentricAnomaly'  : u.rad,
