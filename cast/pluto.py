@@ -41,6 +41,7 @@ known_units = {
     "J_DISK_." : Dim(M=1, L=2, T=-1),
     "F_."      : Dim(M=1, L=1, T=-2),
     "ACC_."    : Dim(L=1, T=-2),
+    "P_1_A_."  : Dim(L=1, T=-2),
     "rho"      : Dim(M=1, L=-3),
     "prs"      : Dim(M=1, L=-1, T=-2),
     "vx."      : Dim(L=1, T=-1)
