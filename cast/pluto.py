@@ -187,7 +187,7 @@ def loadPlutoParticles(datadir, particles, unitSys):
         for k, name in enumerate(varNames):
             if k <= 1:
                 continue
-            p.data[name] = TimeSeries(name = name, data = data[n::Nparticles, k]*units[name], time=p.data['time'])
+            p.data[name] = TimeSeries(name = name, data = data[n::Nparticles-1, k]*units[name], time=p.data['time'])
 
     with open(os.path.join(datadir, 'nbody.out'), 'r') as df:
         for n,line in zip(range(Nparticles) ,df):
