@@ -12,7 +12,7 @@ from . import grid
 from . import units
 from .units import Dimension as Dim
 from .dataset import *
-import astropy.units
+import astropy.units as u
 
 """ Datafiles produced by fargo3d.
 Filenames are given as regex expression to extract from file list."""
