@@ -174,7 +174,7 @@ class PolarRegularGrid(AbstractGrid):
         if self.dim == 1:
             return np.meshgrid( self.r-self.dr/2 )
         elif self.dim == 2:
-            R, Phi = np.meshgrid( self.r-self.dr/2, self.phi-self.dphi/2 )
+            Phi, R = np.meshgrid( self.phi-self.dphi/2, self.r-self.dr/2 )
             X = R*np.cos(Phi)
             Y = R*np.sin(Phi)
             return (X,Y)
