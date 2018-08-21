@@ -47,10 +47,6 @@ def _plot_disk_midplane_density_3d(ax, fld, grd, **kwargs):
     else:
         data = fld.data[:,Nmid,:]
 
-    PHI, R = np.meshgrid( grd.phi, grd.r )
-    X = R*np.cos(PHI)
-    Y = R*np.sin(PHI)
-
-
+    X, Y = grd.meshgrid_midplane()
 
     return ax.pcolormesh(X, Y, data)
