@@ -27,7 +27,7 @@ A sketch of a dataset class/interface can be found in [[file:notes/dataset.org]]
 
 *** TODO list features
 
-*** TODO finish implementing particle wrapper
+*** DONE finish implementing particle wrapper
 SCHEDULED: <2018-08-13 Mo>
 
 write load function

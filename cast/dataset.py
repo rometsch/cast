@@ -119,7 +119,7 @@ class Field:
         self.data = data
         self.name = name
         self.resource = resource
-                self.unitSys = unitSys
+        self.unitSys = unitSys
 
     def load(self):
         raise NotImplementedError("load function of abstract class called. Need to define this function for the codespecific Field class")
