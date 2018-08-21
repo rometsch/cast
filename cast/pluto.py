@@ -212,9 +212,6 @@ class ScalarTimeSeries(TimeSeries):
         pass
 
 class PlutoField(Field):
-    def __init__(self, *args, unitSys=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.unitSys = unitSys
 
     def load(self):
         if self.data is None:
