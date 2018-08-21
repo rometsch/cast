@@ -121,18 +121,29 @@ class SphericalRegularGrid(AbstractGrid):
         if self.dim == 1:
             return np.meshgrid( self.r-self.dr/2 )
         elif self.dim == 2:
-            R, Phi = np.meshgrid( self.r-self.dr/2, self.phi-self.dphi/2 )
-            X = R*np.cos(Phi)
-            Y = R*np.sin(Phi)
-            return (X,Y)
+            return self._meshgrid_2d()
         elif self.dim == 3:
-            R, Theta, Phi = np.meshgrid( self.r-self.dr/2, self.theta-self.dtheta/2, self.phi-self.dphi/2 )
-            X = R*np.cos(Phi)*np.sin(Theta)
-            Y = R*np.sin(Phi)*np.sin(Theta)
-            Z = R*np.cos(Theta)
-            return np.meshgrid( X, Y, Z )
+            return self._meshgrid_3d()
         else:
             raise ValueError("Can not construct meshgrid for dim = {}".format(self.dim))
+
+    def meshgrid_midplane(self):
+        if self.dim != 3:
+            raise ValueError("Midplane meshgrid only defined for 3d.")
+        return self._meshgrid_2d()
+
+    def _meshgrid_2d(self):
+        Phi, R = np.meshgrid( self.phi-self.dphi/2, self.r-self.dr/2  )
+        X = R*np.cos(Phi)
+        Y = R*np.sin(Phi)
+        return (X,Y)
+
+    def _meshgrid_3d(self):
+        Phi, Theta, R = np.meshgrid( np.append(self.phi-self.dphi/2, self.phi-self.dphi/2 , self.theta-self.dtheta/2, self.r-self.dr/2)
+        X = R*np.cos(Phi)*np.sin(Theta)
+        Y = R*np.sin(Phi)*np.sin(Theta)
+        Z = R*np.cos(Theta)
+        return ( X, Y, Z )
 
 class PolarRegularGrid(AbstractGrid):
     def __init__(self, **kwargs):
