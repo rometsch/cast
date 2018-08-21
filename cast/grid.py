@@ -81,9 +81,9 @@ class AbstractGrid:
         if self.dim == 1:
             return np.meshgrid( X[0] )
         elif self.dim == 2:
-            return np.meshgrid( X[0], X[1] )
+            return np.meshgrid( X[1], X[0] )
         elif self.dim == 3:
-            return np.meshgrid( X[0], X[1], X[2] )
+            return np.meshgrid( X[2], X[1], X[0] )
         else:
             raise ValueError("Can not construct meshgrid for dim = {}".format(self.dim))
 
