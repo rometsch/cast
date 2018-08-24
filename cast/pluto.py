@@ -114,7 +114,7 @@ def pload_to_grid(pl, unitSys = {'L' : 1}):
     else:
         raise NotImplementedError("No grid implemented for '{}' geometry.".format(pl.geometry))
 
-def createPlutoParticles(datadir, unitSys):
+def createPlutoParticles(datadir, unitSys, extraData):
     # return a list of PlutoParticle objects for all present nbody particles
     particleIds = plutoParticlesIds(datadir)
     particles = []
@@ -122,7 +122,7 @@ def createPlutoParticles(datadir, unitSys):
         particles.append(Particle(name = i, unitSys=unitSys, data={}))
 
     # register the common load function
-    loadFunction = lambda : loadPlutoParticles(datadir, particles, unitSys)
+    loadFunction = lambda : loadPlutoParticles(datadir, particles, unitSys, extraData)
     for p in particles:
         p.load = loadFunction
 
@@ -142,7 +142,7 @@ def plutoParticlesIds(datadir):
                 break
     return ids
 
-def loadPlutoParticles(datadir, particles, unitSys):
+def loadPlutoParticles(datadir, particles, unitSys, extraData):
     pids = [p.name for p in particles]
     Nparticles = len(particles)
 
@@ -190,6 +190,7 @@ def loadPlutoParticles(datadir, particles, unitSys):
                 continue
             p.data[name] = TimeSeries(name = name, data = data[n::Nparticles-1, k]*units[name], time=p.data['time'])
 
+    # get the mass from the restart file, assume its constant!
     with open(os.path.join(datadir, 'nbody.out'), 'r') as df:
         for n,line in zip(range(Nparticles) ,df):
             parts = line.strip().split()
@@ -197,6 +198,14 @@ def loadPlutoParticles(datadir, particles, unitSys):
                 raise ValueError("line {} does not correspond to planet {} but to {}".format(n,n,parts[1]))
             mass = float(parts[2])*np.ones(len(particles[n].data['time']))*unitSys['M']
             particles[n].data['mass'] = TimeSeries(name = 'mass', data = mass, time=particles[n].data['time'])
+
+    # get accelerations which are written to the analysisValue file
+    for n, p in enumerate(particles):
+        for i in range(1,4):
+            varname = 'P_{}_A_{}'.format(n, i-1)
+            if varname in extraData:
+                p.data['a{}'.format(i)] = extraData[varname]
+                p.data['a{}'.format(i)].name = 'a{}'.format(i)
 
 
 
@@ -283,7 +292,7 @@ class PlutoDataset(AbstractDataset):
 
     def find_particles(self):
         if all([f in self.datafiles for f in particle_file_pattern]):
-            self.particles = createPlutoParticles(self.datadir, self.units)
+            self.particles = createPlutoParticles(self.datadir, self.units, self.timeSeries)
 
     def find_fields(self):
         output_numbers = []
