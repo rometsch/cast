@@ -29,11 +29,13 @@ def plot_disk_midplane_density(fld, grd=None, ax=None, **kwargs):
         fig.colorbar(im)
         plt.show()
 
+    return im
+
 def plot_disk_midplane_density_delta(fld, fld0, grd=None, ax=None, **kwargs):
     # same as plot_disk_midplane_density but with a new field holding the difference of data = fld - fld0
     FieldClass = type(fld)
     diff_fld = FieldClass( name=fld.name+"-diff", grid=fld.grid, data = fld.data - fld0.data)
-    plot_disk_midplane_density(diff_fld, grd=grd , ax=ax  , **kwargs)
+    return plot_disk_midplane_density(diff_fld, grd=grd , ax=ax  , **kwargs)
 
 def _plot_disk_midplane_density_3d(ax, fld, grd, **kwargs):
     # assume a full disk with theta = pi/2 +- delta
