@@ -180,11 +180,11 @@ class Fargo3dParticle(Particle):
                 unit = units_dict[name] if name in units_dict else 1
                 self.data[name] = ScalarTimeSeries(name = name, data = data[:,k]*unit, time = self.data['time'])
 
-        for v in ["ax", "ay", "az"]:
+        for v, name in zip(["ax", "ay", "az"], ['a1','a2', 'a3']):
             unit = self.unitSys['L']*self.unitSys['T']**(-2)
             if v in self.resource:
                 data = np.genfromtxt(self.resource[v])[:,1]
-                self.data[v] = ScalarTimeSeries(name = name, data = data*unit, time = self.data['time'])
+                self.data[name] = ScalarTimeSeries(name = name, data = data*unit, time = self.data['time'])
 
 class Fargo3dField(Field):
     def __init__(self, *args, unitSys=None, **kwargs):
