@@ -266,6 +266,10 @@ class Fargo3dDataset(AbstractDataset):
                         self.particles[name] = Fargo3dParticle(name, resource=fpath, unitSys=self.units)
                     else:
                         self.particles[name].add_resource(fpath)
+        # add the particles to a planet system, suppose that there are only planets as particles
+        planets = [self.particles[key] for key in self.particles]
+        self.planets = PlanetSystem( planets = sorted(planets,
+                                     key=lambda x: x.name))
 
     def find_times(self):
         for name in time_files:
