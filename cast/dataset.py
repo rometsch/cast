@@ -132,6 +132,21 @@ class Particle:
                 ts.data = ts.data[:len(ts.time)]
 
 
+class PlanetSystem:
+    def __init__(self, planets):
+        self.planets = planets
+        self._planets_by_name = {p.name : p for p in self.planets}
+
+    def __getitem__(self, key):
+        try:
+            return self.planets[key]
+        except TypeError:
+            try:
+                return self._planets_by_name[key]
+            except KeyError:
+                raise KeyError("{} not in planets nor is it a planet's name".format(key))
+
+
 class Field:
     # This class holds data for a variable from simulation
     # output or a derived variable.
