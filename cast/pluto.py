@@ -126,7 +126,7 @@ def createPlutoParticles(datadir, unitSys, extraData):
     for p in particles:
         p.load = loadFunction
 
-    return { p.name : p for p in particles }
+    return particles
 
 def plutoParticlesIds(datadir):
     with open(os.path.join(datadir, 'nbody_coordinates.dat'), 'r') as f:
@@ -292,7 +292,9 @@ class PlutoDataset(AbstractDataset):
 
     def find_particles(self):
         if all([f in self.datafiles for f in particle_file_pattern]):
-            self.particles = createPlutoParticles(self.datadir, self.units, self.timeSeries)
+            particles = createPlutoParticles(self.datadir, self.units, self.timeSeries)
+            self.particles = {p.name : p for p in particles}
+            self.planets = PlanetSystem( planets= particles[1:])
 
     def find_fields(self):
         output_numbers = []
