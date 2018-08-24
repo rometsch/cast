@@ -26,6 +26,7 @@ class AbstractGrid:
 
         self._shape()
         self._dx()
+        self._xI()
 
     def __repr__(self):
         classname = repr(self.__class__)[8:-2]
@@ -58,6 +59,20 @@ class AbstractGrid:
                 else:
                     raise ValueError("Unequal spacing found in {} but d{} is not specified.".format(l,l))
 
+    def _xI(self):
+        # Calculate coordinates of cell interfaces
+        # Resulting array is one element larger
+        for l in self.dim_labels:
+            if not l+'I' in self.__dict__:
+                x = self.__dict__[l]
+                dx = self.__dict__["d"+l]
+                try:
+                    last_dx = dx[-1]
+                except TypeError:
+                    last_dx = dx
+                xI = np.append( x-dx/2, x[-1] + last_dx/2)
+                self.__dict__[l+"I"] = xI
+
     def _dV(self):
         self.dV = self["dV" + self.dim_labels[0]]
         for n in range(1,self.dim):
@@ -77,7 +92,8 @@ class AbstractGrid:
                     lim[0], lim[1], np.min(X), np.max(X)))
 
     def meshgrid(self):
-        X = [self.__dict__[l] for l in reversed(self.dim_labels)]
+        self._xI()
+        X = [self.__dict__[l+"I"] for l in reversed(self.dim_labels)]
         if self.dim == 1:
             return np.meshgrid( X[0] )
         elif self.dim == 2:
@@ -119,7 +135,7 @@ class SphericalRegularGrid(AbstractGrid):
 
     def meshgrid(self):
         if self.dim == 1:
-            return np.meshgrid( self.r-self.dr/2 )
+            return np.meshgrid( self.rI )
         elif self.dim == 2:
             return self._meshgrid_2d()
         elif self.dim == 3:
@@ -133,13 +149,13 @@ class SphericalRegularGrid(AbstractGrid):
         return self._meshgrid_2d()
 
     def _meshgrid_2d(self):
-        Phi, R = np.meshgrid( self.phi-self.dphi/2, self.r-self.dr/2  )
+        Phi, R = np.meshgrid( self.phiI, self.rI  )
         X = R*np.cos(Phi)
         Y = R*np.sin(Phi)
         return (X,Y)
 
     def _meshgrid_3d(self):
-        Phi, Theta, R = np.meshgrid( np.append(self.phi-self.dphi/2, self.phi-self.dphi/2 , self.theta-self.dtheta/2, self.r-self.dr/2)
+        Phi, Theta, R = np.meshgrid( self.phiI, self.phiI , self.rI )
         X = R*np.cos(Phi)*np.sin(Theta)
         Y = R*np.sin(Phi)*np.sin(Theta)
         Z = R*np.cos(Theta)
@@ -172,9 +188,9 @@ class PolarRegularGrid(AbstractGrid):
 
     def meshgrid(self):
         if self.dim == 1:
-            return np.meshgrid( self.r-self.dr/2 )
+            return np.meshgrid( self.rI )
         elif self.dim == 2:
-            Phi, R = np.meshgrid( self.phi-self.dphi/2, self.r-self.dr/2 )
+            Phi, R = np.meshgrid( self.phiI, self.rI )
             X = R*np.cos(Phi)
             Y = R*np.sin(Phi)
             return (X,Y)
