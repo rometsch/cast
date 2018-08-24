@@ -110,6 +110,27 @@ class Particle:
             self.load()
             return self.data[varname]
 
+    def truncate(self, t=None):
+        """ Truncate all time series to time t (default: the shortest available time series) """
+        # Make sure data is loaded
+        if not 'time' in self.data:
+            self.load()
+        # check whether final time is supplied
+        if t is None:
+            t = self['time'][-1]
+        for key, ts in self.data.items():
+            if key == 'time':
+                continue
+            if self['time'][-1] > ts.time[-1]:
+                self.data['time'] = ts.time
+
+        for key, ts in self.data.items():
+            if key == 'time':
+                continue
+            if ts.time[-1] > self['time'][-1]:
+                ts.time = self['time']
+                ts.data = ts.data[:len(ts.time)]
+
 
 class Field:
     # This class holds data for a variable from simulation
