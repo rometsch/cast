@@ -8,6 +8,7 @@
 import numpy as np
 from collections import OrderedDict as ODict
 from .getter import Getter
+from .particle import *
 import os
 
 def find_dir_containing(patterns, rootdir):
@@ -93,60 +94,6 @@ class Time:
         # If no index was found in the vicinity search globaly
         return np.argmin(np.abs(self.data-t))
 
-class Particle:
-    def __init__(self, name=None, resource=None, data=None, unitSys=None):
-        self.name = name
-        self.resource = resource
-        self.unitSys = unitSys
-        self.data = data if data is not None else {}
-
-    def load(self, varname = None, n=None ):
-        raise NotImplementedError("load function of abstract class called. Need to define this function for the codespecific dataset")
-
-    def __getitem__(self, varname):
-        try:
-            return self.data[varname]
-        except KeyError:
-            self.load()
-            return self.data[varname]
-
-    def truncate(self, t=None):
-        """ Truncate all time series to time t (default: the shortest available time series) """
-        # Make sure data is loaded
-        if not 'time' in self.data:
-            self.load()
-        # check whether final time is supplied
-        if t is None:
-            t = self['time'][-1]
-        for key, ts in self.data.items():
-            if key == 'time':
-                continue
-            if self['time'][-1] > ts.time[-1]:
-                self.data['time'] = ts.time
-
-        for key, ts in self.data.items():
-            if key == 'time':
-                continue
-            if ts.time[-1] > self['time'][-1]:
-                ts.time = self['time']
-                ts.data = ts.data[:len(ts.time)]
-
-
-class PlanetSystem:
-    def __init__(self, planets):
-        self.planets = planets
-        self._planets_by_name = {p.name : p for p in self.planets}
-
-    def __getitem__(self, key):
-        try:
-            return self.planets[key]
-        except TypeError:
-            try:
-                return self._planets_by_name[key]
-            except KeyError:
-                raise KeyError("{} not in planets nor is it a planet's name".format(key))
-
-
 class Field:
     # This class holds data for a variable from simulation
     # output or a derived variable.
@@ -205,6 +152,15 @@ class TimeSeries:
         """ Extract time and data for the interval [tmin, tmax] """
         mask = np.logical_and( self.__dict__['time'] >= tmin, self.__dict__['time'] <= tmax)
         return (self._time(n = mask), self._data(n = mask))
+
+    def truncate(self, n=None):
+        """ Truncate the time series at index n.
+        If n is not given, the minimum length of time and data vectors is used. """
+        if n is None:
+            n = min(len(self.data), len(self.time))
+        if max(len(self.data), len(self.time)) > n:
+            self.time = self.time[:n]
+            self.data = self.data[:n]
 
 
 class FieldTimeSeries(TimeSeries):
