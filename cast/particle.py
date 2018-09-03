@@ -106,6 +106,11 @@ class Planet(Particle):
         self.data['TrueAnomaly'] = TimeSeries('true anomaly', time=self['time'], data=nu)
         self.data['xi'] = TimeSeries('angle to line of nodes', time=self['time'], data=xi)
 
+    def _Torb(self):
+        """ Calculate orbital period """
+        Torb = np.sqrt(self['a'].data**3*4*np.pi**2/(const.G*(1*u.solMass+self['mass'][0]) )).to(u.yr)
+        self.data['Torb'] = TimeSeries('orbital period', time=self.data['time'], data=Torb)
+        
 class PlanetSystem:
     def __init__(self, planets):
         self.planets = planets
