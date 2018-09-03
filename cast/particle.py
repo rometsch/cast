@@ -21,12 +21,20 @@ class Particle:
     def load(self, varname = None, n=None ):
         raise NotImplementedError("load function of abstract class called. Need to define this function for the codespecific dataset")
 
-    def __getitem__(self, varname):
+    def __getitem__(self, key):
         try:
-            return self.data[varname]
+            return self.data[key]
         except KeyError:
             self.load()
-            return self.data[varname]
+            try:
+                return self.data[key]
+            except KeyError:
+                try:
+                    getattr(self, "_{}".format(key))()
+                    return self.data[key]
+                except AttributeError:
+                    raise AttributeError("Can't load or calculate '{}'.".format(key))
+            
 
     def truncate(self, t=None):
         """ Truncate all time series to time t (default: the shortest available time series) """
