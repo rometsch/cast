@@ -119,7 +119,7 @@ class ScalarTimeSeries(TimeSeries):
             if self.name is not None:
                 self.data *= self.unitSys.find(self.name)
 
-class Fargo3dParticle(Particle):
+class Fargo3dPlanet(Planet):
     def __init__(self, name, resource=None, unitSys=None):
         super().__init__(name=name, resource = {}, unitSys=unitSys)
         if resource:
@@ -263,7 +263,7 @@ class Fargo3dDataset(AbstractDataset):
                     fpath = os.path.join(self.datadir, f)
                     name = rs.groups()[0]
                     if name not in self.particles:
-                        self.particles[name] = Fargo3dParticle(name, resource=fpath, unitSys=self.units)
+                        self.particles[name] = Fargo3dPlanet(name, resource=fpath, unitSys=self.units)
                     else:
                         self.particles[name].add_resource(fpath)
         # add the particles to a planet system, suppose that there are only planets as particles
