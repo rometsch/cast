@@ -8,6 +8,8 @@
 import numpy as np
 import os
 from .dataset import TimeSeries
+import astropy.units as u
+import astropy.constants as const
 
 class Particle:
     def __init__(self, name=None, resource=None, data=None, unitSys=None):
@@ -56,7 +58,10 @@ class Particle:
 
 class Planet(Particle):
 
-    def recalc_orbital_elements(self):
+    def calc_orbital_elements(self, Mstar=1*u.solMass):
+        """ Calculate orbital elements using postition (x), velocities (v) and stellar mass (Mstar) """
+        mu = Mstar*const.G
+
         x1 = p['x1'].data
         x2 = p['x2'].data
         x3 = p['x3'].data
