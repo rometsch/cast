@@ -62,12 +62,12 @@ class Planet(Particle):
         """ Calculate orbital elements using postition (x), velocities (v) and stellar mass (Mstar) """
         mu = Mstar*const.G
 
-        x1 = p['x1'].data
-        x2 = p['x2'].data
-        x3 = p['x3'].data
-        v1 = p['v1'].data
-        v2 = p['v2'].data
-        v3 = p['v3'].data
+        x1 = self['x1'].data
+        x2 = self['x2'].data
+        x3 = self['x3'].data
+        v1 = self['v1'].data
+        v2 = self['v2'].data
+        v3 = self['v3'].data
 
         h1 = x2*v3 - v2*x3
         h2 = x3*v1 - v3*x1
