@@ -89,14 +89,14 @@ class Planet(Particle):
         nu = np.arccos( (a*(1-e**2) - r)/(e*r) )
         omega = xi - nu
         
-        self.data['E'] = TimeSeries('specific energy', time=self.time, data=E)
-        self.data['a'] = TimeSeries('semi major axis', time=self.time, data=a)
-        self.data['e'] = TimeSeries('eccentricity', time=self.time, data=e)
-        self.data['i'] = TimeSeries('inclination', time=self.time, data=i)
-        self.data['AscendingNode'] = TimeSeries('longitude of ascending node', time=self.time, data=Omega)
-        self.data['Periastron'] = TimeSeries('argument of periastron', time=self.time, data='omega')
-        self.data['TrueAnomaly'] = TimeSeries('true anomaly', time=self.time, data=nu)
-        self.data['xi'] = TimeSeries('angle to line of nodes', time=self.time, data=xi)
+        self.data['E'] = TimeSeries('specific energy', time=self['time'], data=E)
+        self.data['a'] = TimeSeries('semi major axis', time=self['time'], data=a)
+        self.data['e'] = TimeSeries('eccentricity', time=self['time'], data=e)
+        self.data['i'] = TimeSeries('inclination', time=self['time'], data=i)
+        self.data['AscendingNode'] = TimeSeries('longitude of ascending node', time=self['time'], data=Omega)
+        self.data['Periastron'] = TimeSeries('argument of periastron', time=self['time'], data=omega)
+        self.data['TrueAnomaly'] = TimeSeries('true anomaly', time=self['time'], data=nu)
+        self.data['xi'] = TimeSeries('angle to line of nodes', time=self['time'], data=xi)
 
 class PlanetSystem:
     def __init__(self, planets):
