@@ -119,7 +119,7 @@ def createPlutoParticles(datadir, unitSys, extraData):
     particleIds = plutoParticlesIds(datadir)
     particles = []
     for i in particleIds:
-        particles.append(Particle(name = i, unitSys=unitSys, data={}))
+        particles.append(Planet(name = i, unitSys=unitSys, data={}))
 
     # register the common load function
     loadFunction = lambda : loadPlutoParticles(datadir, particles, unitSys, extraData)
