@@ -1,8 +1,10 @@
 #----------------------------------------------------------------------
-#	Plotting data from cast datasets.
+#   Plotting data from cast datasets.
+#   The functions in here plot on a pyplot axis
+#   and return image artists.
 #
-#	Author	: Thomas Rometsch (thomas.rometsch@uni-tuebingen.de)
-#	Date	: 2018-08-20
+#   Author	: Thomas Rometsch (thomas.rometsch@uni-tuebingen.de)
+#   Date	: 2018-08-20
 #----------------------------------------------------------------------
 
 from . import grid
