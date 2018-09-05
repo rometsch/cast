@@ -14,6 +14,7 @@ def orbit_averaged_rate_of_inclination_change(p, t0=None, t1=None, simpson=False
     Assume p to be a cast.particle.Planet
     t0 and t1 are the boundaries of the integration interval
     in multiples of orbital periods """
+    p.truncate()
     Torb = p["Torb"][0]
     if t0 is None:
         tmin = p['time'][0]
