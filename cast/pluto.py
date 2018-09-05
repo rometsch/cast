@@ -14,6 +14,7 @@ import os
 import numpy as np
 import astropy.units as u
 from .pluload import pload
+from .particle import Planet
 
 
 """ Datafiles produced by pluto.
