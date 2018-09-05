@@ -42,7 +42,7 @@ def orbit_averaged_rate_of_inclination_change(p, t0=None, t1=None, simpson=False
         i = p["i"].data
         # Calculate anomalies
         try:
-            xi = p["xi"].data
+            xi = p.data["xi"].data
         except KeyError:
             xi = p["Periastron"].data + p["TrueAnomaly"].data
         # sins and cosins
