@@ -8,7 +8,6 @@
 import numpy as np
 from collections import OrderedDict as ODict
 from .getter import Getter
-from .particle import *
 import os
 
 def find_dir_containing(patterns, rootdir):
