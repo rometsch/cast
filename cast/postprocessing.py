@@ -33,31 +33,31 @@ def orbit_averaged_rate_of_inclination_change(p, t0=None, t1=None, simpson=False
         didt = p.data['didt']
     except KeyError:
         # Get forces
-        Fx = p["a1"].data;
-        Fy = p["a2"].data;
-        Fz = p["a3"].data;
+        Fx = p["a1"];
+        Fy = p["a2"];
+        Fz = p["a3"];
         # get orbital parameters
-        a = p["a"].data
+        a = p["a"]
         r = a # for circular orbits
-        e = p["e"].data
-        i = p["i"].data
+        e = p["e"]
+        i = p["i"]
         # Calculate anomalies
         try:
-            xi = p.data["xi"].data
+            xi = p.data["xi"]
         except KeyError:
-            xi = p["Periastron"].data + p["TrueAnomaly"].data
+            xi = p["Periastron"] + p["TrueAnomaly"]
         # sins and cosins
         cos_xi = np.cos(xi);
         sin_xi = np.sin(xi);
         cos_i = np.cos(i);
         sin_i = np.sin(i);
         # Calculate projections
-        x = p['x1'].data
-        y = p['x2'].data
-        z = p['x3'].data
-        vx = p['v1'].data
-        vy = p['v2'].data
-        vz = p['v3'].data
+        x = p['x1']
+        y = p['x2']
+        z = p['x3']
+        vx = p['v1']
+        vy = p['v2']
+        vz = p['v3']
 
         eNx = y*vz - z*vy
         eNy = z*vx - x*vz
