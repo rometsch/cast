@@ -102,6 +102,6 @@ def orbit_averaged_rate_of_inclination_change(p, t0=None, t1=None, simpson=False
             rate = (rate*spl_time.unit.si*spl_data.unit.si).decompose().to(u.rad/Torb)
         except Exception:
             print('Got an exception for i = {}'.format(p['i'][0].to(u.degree)))
-            rate = - 1e-10*u.rad/Torb
+            raise
 
     return rate
