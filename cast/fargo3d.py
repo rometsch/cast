@@ -140,7 +140,7 @@ class Fargo3dPlanet(Planet):
     def load(self):
         if "planet" in self.resource:
             data = np.genfromtxt(self.resource["planet"])
-            names = ["time", "TimeStep", "x1", "x2", "x3", "v1",
+            names = ["TimeStep", "x1", "x2", "x3", "v1",
                      "v2", "v3", "mass", "time", "OmegaFrame"]
             units_dict = {
                 "time" : self.unitSys['T'],
@@ -153,9 +153,10 @@ class Fargo3dPlanet(Planet):
                 "mass" : self.unitSys['M'],
                 "OmegaFrame" : self.unitSys['T']**(-1)
             }
+            time = data[:,8]*units_dict['time']
             for k, name in enumerate(names):
                 unit = units_dict[name] if name in units_dict else 1
-                self.data[name] = ScalarTimeSeries(name = name, data = data[:,k]*unit, time = self.data['time'])
+                self.data[name] = ScalarTimeSeries(name = name, data = data[:,k]*unit, time = time)
 
 
         if "orbit" in self.resource:
@@ -173,7 +174,7 @@ class Fargo3dPlanet(Planet):
                 "MeanAnomaly"       : u.rad,
                 "XYPerihelion"      : u.rad
             }
-            time = data["time"]*self.unitSys['T']
+            time = data[:,0]*self.unitSys['T']
             for k, name in enumerate(names):
                 if name == "time":
                     continue
