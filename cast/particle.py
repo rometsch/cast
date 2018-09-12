@@ -106,6 +106,44 @@ class Planet(Particle):
         self.data['TrueAnomaly'] = TimeSeries('true anomaly', time=self['time'], data=nu)
         self.data['xi'] = TimeSeries('angle to line of nodes', time=self['time'], data=xi)
 
+    def calc_accelerations_RTN(self):
+        """ Calculate the acceleration in radial, tangengial and normal directions """
+        Torb = self['Torb'][0]
+        t = self['time'].to(Torb)
+
+        a1 = self['a1'].data
+        a2 = self['a2'].data
+        a3 = self['a3'].data
+        x1 = self['x1'].data
+        x2 = self['x2'].data
+        x3 = self['x3'].data
+        v1 = self['v1'].data
+        v2 = self['v2'].data
+        v3 = self['v3'].data
+
+        r = np.sqrt(x1**2 + x2**2 + x3 **2)
+        v = np.sqrt(v1**2 + v2**2 + v3 **2)
+
+        r1 = x1/r
+        r2 = x2/r
+        r3 = x3/r
+
+        t1 = v1/v
+        t2 = v2/v
+        t3 = v3/v
+
+        h1 = x2*v3 - x3*v2
+        h2 = x3*v1 - x1*v3
+        h3 = x1*v2 - x2*v1
+        h = np.sqrt(h1**2 + h2**2 + h3**2)
+        n1 = h1/h
+        n2 = h2/h
+        n3 = h3/h
+
+        self.data['ar'] = a1*r1 + a2*r2 + a3*r3
+        self.data['at'] = a1*t1 + a2*t2 + a3*t3
+        self.data['an'] = a1*n1 + a2*n2 + a3*n3
+
     def _Torb(self):
         """ Calculate orbital period """
         Torb = np.sqrt(self['a'].data**3*4*np.pi**2/(const.G*(1*u.solMass+self['mass'][0]) )).to(u.yr)
