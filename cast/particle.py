@@ -144,6 +144,15 @@ class Planet(Particle):
         self.data['at'] = a1*t1 + a2*t2 + a3*t3
         self.data['an'] = a1*n1 + a2*n2 + a3*n3
 
+    def _ar(self):
+        self.calc_accelerations_RTN()
+
+    def _at(self):
+        self.calc_accelerations_RTN()
+
+    def _an(self):
+        self.calc_accelerations_RTN()
+
     def _Torb(self):
         """ Calculate orbital period """
         Torb = np.sqrt(self['a'].data**3*4*np.pi**2/(const.G*(1*u.solMass+self['mass'][0]) )).to(u.yr)
