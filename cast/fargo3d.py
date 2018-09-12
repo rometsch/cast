@@ -12,7 +12,7 @@ from . import grid
 from . import units
 from .units import Dimension as Dim
 from .dataset import *
-from .particle import Planet, PlanetSystem
+from .particles import Planet, PlanetSystem
 import astropy.units as u
 
 """ Datafiles produced by fargo3d.

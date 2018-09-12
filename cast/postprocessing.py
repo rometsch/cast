@@ -11,7 +11,7 @@ from . import dataset
 
 def orbit_averaged_rate_of_inclination_change(p, t0=None, t1=None, simpson=False):
     """ Calculate the orbit average of the rate of change of inclination
-    Assume p to be a cast.particle.Planet
+    Assume p to be a cast.particles.Planet
     t0 and t1 are the boundaries of the integration interval
     in multiples of orbital periods """
     p.truncate()
