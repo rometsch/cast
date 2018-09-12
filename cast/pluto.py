@@ -196,7 +196,7 @@ def loadPlutoParticles(datadir, particles, unitSys, extraData):
             parts = line.strip().split()
             if int(parts[1]) != n:
                 raise ValueError("line {} does not correspond to planet {} but to {}".format(n,n,parts[1]))
-            mass = float(parts[2])*np.ones(len(particles[n].data['time']))*unitSys['M']
+            mass = float(parts[2])*np.ones(len(particles[n]['time']))*unitSys['M']
             particles[n].data['mass'] = TimeSeries(name = 'mass', data = mass, time=particles[n].data['time'])
 
     # get accelerations which are written to the analysisValue file
