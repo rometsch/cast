@@ -160,10 +160,8 @@ def loadPlutoParticles(datadir, particles, unitSys, extraData):
               'v3'   : unitSys['L']/unitSys['T'] }
 
     for n, p in enumerate(particles):
-        p.data['time'] = data[n::Nparticles, 1]*unitSys['T']
+        time = data[n::Nparticles, 1]*unitSys['T']
         for k, name in enumerate(varNames):
-            if k <= 1:
-                continue
             p.data[name] = TimeSeries(name = name, data = data[n::Nparticles, k]*units[name], time=p.data['time'])
 
     # load orbital elements
@@ -186,10 +184,11 @@ def loadPlutoParticles(datadir, particles, unitSys, extraData):
     # orbital elements are not printed for the primary object
     # load it for all others
     for n, p in enumerate(particles[1:]):
+        time = data[n::Nparticles-1, 1]*unitSys['T']
         for k, name in enumerate(varNames):
             if k <= 1:
                 continue
-            p.data[name] = TimeSeries(name = name, data = data[n::Nparticles-1, k]*units[name], time=p.data['time'])
+            p.data[name] = TimeSeries(name = name, data = data[n::Nparticles-1, k]*units[name], time=time)
 
     # get the mass from the restart file, assume its constant!
     with open(os.path.join(datadir, 'nbody.out'), 'r') as df:
