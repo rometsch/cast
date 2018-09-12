@@ -23,15 +23,15 @@ class Particle:
 
     def __getitem__(self, key):
         try:
-            return self.data[key]
+            return self.data[key].data
         except KeyError:
             self.load()
             try:
-                return self.data[key]
+                return self.data[key].data
             except KeyError:
                 try:
                     getattr(self, "_{}".format(key))()
-                    return self.data[key]
+                    return self.data[key].data
                 except AttributeError:
                     raise AttributeError("Can't load or calculate '{}'.".format(key))
             
@@ -70,12 +70,12 @@ class Planet(Particle):
         """ Calculate orbital elements using postition (x), velocities (v) and stellar mass (Mstar) """
         mu = Mstar*const.G
 
-        x1 = self['x1'].data
-        x2 = self['x2'].data
-        x3 = self['x3'].data
-        v1 = self['v1'].data
-        v2 = self['v2'].data
-        v3 = self['v3'].data
+        x1 = self['x1']
+        x2 = self['x2']
+        x3 = self['x3']
+        v1 = self['v1']
+        v2 = self['v2']
+        v3 = self['v3']
 
         h1 = x2*v3 - v2*x3
         h2 = x3*v1 - v3*x1
@@ -111,15 +111,15 @@ class Planet(Particle):
         Torb = self['Torb'][0]
         t = self['time'].to(Torb)
 
-        a1 = self['a1'].data
-        a2 = self['a2'].data
-        a3 = self['a3'].data
-        x1 = self['x1'].data
-        x2 = self['x2'].data
-        x3 = self['x3'].data
-        v1 = self['v1'].data
-        v2 = self['v2'].data
-        v3 = self['v3'].data
+        a1 = self['a1']
+        a2 = self['a2']
+        a3 = self['a3']
+        x1 = self['x1']
+        x2 = self['x2']
+        x3 = self['x3']
+        v1 = self['v1']
+        v2 = self['v2']
+        v3 = self['v3']
 
         r = np.sqrt(x1**2 + x2**2 + x3 **2)
         v = np.sqrt(v1**2 + v2**2 + v3 **2)
@@ -140,9 +140,14 @@ class Planet(Particle):
         n2 = h2/h
         n3 = h3/h
 
-        self.data['ar'] = a1*r1 + a2*r2 + a3*r3
-        self.data['at'] = a1*t1 + a2*t2 + a3*t3
-        self.data['an'] = a1*n1 + a2*n2 + a3*n3
+        ar = a1*r1 + a2*r2 + a3*r3
+        at = a1*t1 + a2*t2 + a3*t3
+        an = a1*n1 + a2*n2 + a3*n3
+
+        self.data['ar'] = TimeSeries('radial acceleration',     time=self['time'], data=ar)
+        self.data['at'] = TimeSeries('tangential acceleration', time=self['time'], data=at)
+        self.data['an'] = TimeSeries('normal acceleration',     time=self['time'], data=an)
+
 
     def _ar(self):
         self.calc_accelerations_RTN()
@@ -155,8 +160,8 @@ class Planet(Particle):
 
     def _Torb(self):
         """ Calculate orbital period """
-        Torb = np.sqrt(self['a'].data**3*4*np.pi**2/(const.G*(1*u.solMass+self['mass'][0]) )).to(u.yr)
-        self.data['Torb'] = TimeSeries('orbital period', time=self.data['time'], data=Torb)
+        Torb = np.sqrt(self['a']**3*4*np.pi**2/(const.G*(1*u.solMass+self['mass'][0]) )).to(u.yr)
+        self.data['Torb'] = TimeSeries('orbital period', time=self['time'], data=Torb)
         
 class PlanetSystem:
     def __init__(self, planets):

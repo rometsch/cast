@@ -140,9 +140,10 @@ class Fargo3dPlanet(Planet):
     def load(self):
         if "planet" in self.resource:
             data = np.genfromtxt(self.resource["planet"])
-            names = ["TimeStep", "x1", "x2", "x3", "v1",
+            names = ["time", "TimeStep", "x1", "x2", "x3", "v1",
                      "v2", "v3", "mass", "time", "OmegaFrame"]
             units_dict = {
+                "time" : self.unitSys['T'],
                 "x1" : self.unitSys['L'],
                 "x2" : self.unitSys['L'],
                 "x3" : self.unitSys['L'],
@@ -152,10 +153,7 @@ class Fargo3dPlanet(Planet):
                 "mass" : self.unitSys['M'],
                 "OmegaFrame" : self.unitSys['T']**(-1)
             }
-            self.data['time'] = data[:,8]*self.unitSys['T']
             for k, name in enumerate(names):
-                if name == "time":
-                    continue
                 unit = units_dict[name] if name in units_dict else 1
                 self.data[name] = ScalarTimeSeries(name = name, data = data[:,k]*unit, time = self.data['time'])
 
@@ -175,17 +173,20 @@ class Fargo3dPlanet(Planet):
                 "MeanAnomaly"       : u.rad,
                 "XYPerihelion"      : u.rad
             }
+            time = data["time"]*self.unitSys['T']
             for k, name in enumerate(names):
                 if name == "time":
                     continue
                 unit = units_dict[name] if name in units_dict else 1
-                self.data[name] = ScalarTimeSeries(name = name, data = data[:,k]*unit, time = self.data['time'])
+                self.data[name] = ScalarTimeSeries(name = name, data = data[:,k]*unit, time = time)
 
         for v, name in zip(["ax", "ay", "az"], ['a1','a2', 'a3']):
             unit = self.unitSys['L']*self.unitSys['T']**(-2)
             if v in self.resource:
-                data = np.genfromtxt(self.resource[v])[:,1]
-                self.data[name] = ScalarTimeSeries(name = name, data = data*unit, time = self.data['time'])
+                dataLoad = np.genfromtxt(self.resource[v])
+                time = dataLoad[:,0]*self.unitSys['T']
+                data = dataLoad[:,1]*unit
+                self.data[name] = ScalarTimeSeries(name = name, data = data, time = time)
 
 class Fargo3dField(Field):
     def __init__(self, *args, unitSys=None, **kwargs):
