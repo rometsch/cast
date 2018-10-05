@@ -6,6 +6,7 @@
 #----------------------------------------------------------------------
 
 from .dataset import *
+from .particles import Particle
 from . import units
 from .units import Dimension as Dim
 from . import grid
