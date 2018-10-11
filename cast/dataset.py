@@ -22,7 +22,7 @@ def find_dir_containing(patterns, rootdir):
     raise FileNotFoundError("Could not find a directory with files matching the patterns '{}' in the (sub)directories of '{}'".format(patterns, rootdir))
 
 code_identifiers = {
-    'fargoTwam' : 'misc.dat',
+    'fargoCPT' : 'misc.dat',
     'fargo3d' : 'fargo3d.h',
     'pluto' : 'pluto.log'
     }
@@ -35,8 +35,8 @@ def Dataset(root='.'):
             for key in code_identifiers:
                 if code_identifiers[key] in filenames:
                     code = key
-    if code == 'fargoTwam':
-        from .fargoTwam import FargoTwamDataset as DSet
+    if code == 'fargoCPT':
+        from .fargoCPT import FargoCPTDataset as DSet
     elif code == "fargo3d":
         from .fargo3d import Fargo3dDataset as DSet
     elif code == "pluto":
