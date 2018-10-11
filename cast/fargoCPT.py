@@ -5,16 +5,15 @@
 #	Date	: 2018-07-12
 #----------------------------------------------------------------------
 
-from .dataset import *
-from .particles import Particle
-from . import units
-from .units import Dimension as Dim
-from . import grid
 import re
 import os
 import numpy as np
+from . import grid
+from . import units
+from .units import Dimension as Dim
+from .dataset import *
+from .particles import Planet, PlanetSystem
 import astropy.units as u
-
 
 """ Datafiles produced by fargo-twam.
 Filenames are given as regex expression to extract from file list."""
@@ -98,7 +97,7 @@ def centered_coordinates(xInterface):
     dx = xInterface[1:] - xInterface[:-1]
     return (x, dx)
 
-def parse_FargoTwam_grid(datadir, unitSys=None):
+def parse_FargoCPT_grid(datadir, unitSys=None):
 	fpath = os.path.join(datadir, "used_rad.dat")
 	rInterface = np.genfromtxt(fpath)
 
@@ -120,7 +119,7 @@ def parse_FargoTwam_grid(datadir, unitSys=None):
 	phi = 0.5*(phi[1:] + phi[:-1])
 	return grid.SphericalRegularGrid(r=r, dr=dr, phi=phi, dphi=dphi)
 
-class FargoTwamField(Field):
+class FargoCPTField(Field):
 	def __init__(self, *args, unitSys=None, **kwargs):
 		super().__init__(*args, **kwargs)
 		self.unitSys = unitSys
@@ -153,7 +152,7 @@ class ScalarTimeSeries(TimeSeries):
 			if self.name is not None:
 				self.data *= self.unitSys.find(self.name)
 
-class FargoTwamParticle(Particle):
+class FargoCPTPlanet(Planet):
 	def __init__(self, name, resource=None, unitSys=None):
 		super().__init__(name=name, resource = {})
 		self.unitSys = unitSys
@@ -222,7 +221,7 @@ class FieldTimeSeries(TimeSeries):
 		self.data = []
 		self.unitSys = unitSys
 		for f in self.resource:
-			self.data.append(FargoTwamField(name, grid=grid, resource=f, unitSys=unitSys))
+			self.data.append(FargoCPTField(name, grid=grid, resource=f, unitSys=unitSys))
 
 	def get(self, varname, n = None ):
 		self.load(n)
@@ -231,7 +230,7 @@ class FieldTimeSeries(TimeSeries):
 	def load(self, n):
 		self.data[n].load()
 
-class FargoTwamDataset(AbstractDataset):
+class FargoCPTDataset(AbstractDataset):
 	def __init__(self, rootdir):
 		super().__init__()
 		self.rootdir = rootdir
@@ -252,7 +251,7 @@ class FargoTwamDataset(AbstractDataset):
 		self.datadir = find_dir_containing(outputdir_indicators, self.rootdir)
 
 	def find_grids(self):
-		self.grids["full"] = parse_FargoTwam_grid(self.datadir, unitSys=self.units)
+		self.grids["full"] = parse_FargoCPT_grid(self.datadir, unitSys=self.units)
 
 	def find_datafiles(self):
 		""" Search the datadir for datafiles."""
@@ -296,7 +295,7 @@ class FargoTwamDataset(AbstractDataset):
 					if "bigplanet" in f:
 						name = "{}".format(int(name) - 1)
 					if name not in self.particles:
-						self.particles[name] = FargoTwamParticle(name, resource=fpath, unitSys=self.units)
+						self.particles[name] = FargoCPTParticle(name, resource=fpath, unitSys=self.units)
 					else:
 						self.particles[name].add_resource(fpath)
 
