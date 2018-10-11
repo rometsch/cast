@@ -116,9 +116,9 @@ class ScalarTimeSeries(TimeSeries):
             self.data = data[:,1]
 
         if self.unitSys is not None:
-            self.time *= self.unitSys['time']
+            self.time = self.time * self.unitSys['time']
             if self.name is not None:
-                self.data *= self.unitSys.find(self.name)
+                self.data = self.data * self.unitSys.find(self.name)
 
 class Fargo3dPlanet(Planet):
     def __init__(self, name, resource=None, unitSys=None):
