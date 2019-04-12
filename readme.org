@@ -13,6 +13,24 @@ A collection of my python tools to manage and analyze astophysics simulations.
 
 A sketch of a dataset class/interface can be found in [[file:notes/dataset.org]]
 
+* Enhancements
+
+** DONE planet attribute for Datasets providing a common interface
+SCHEDULED: <2018-08-23 Do>
+
++ planet number starting at 1 with integer labels
++ planet class inheriting from particle
+  - calculator for Torb
+
+** DONE truncate data to lates common time when loading particles for pluto and fargo3d
+SCHEDULED: <2018-08-23 Do>
+
+Added truncate method to particle to truncate values to a given time which defualts to the endpoint of the shortest time series
+
+** TODO save git commit in meta data
+
+to be used when running postprocessing on simulation data
+
 * Supported codes
 
 ** Fargo3d :fargo3d:
