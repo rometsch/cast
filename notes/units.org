@@ -1,0 +1,79 @@
+#+title: Unit handling for physics simulations
+#+author: Thomas Rometsch
+
+* Intro
+
+The output data of physics simulations is, in my opinion, less valuable if the units used for the simulation are not stored alongside the data.
+
+At any step in the simulation process it should be clear, what units are used.
+Let's consider three stages in a simulation where physical quantities need to be specified or are computed.
+
+1. preparation
+2. simulation
+3. post-processing
+
+Different users and developers might be involved in each of these stages, so clarity about the unit a parameter or quantity has should be available at least at the interfaces of each stage.
+
+** An example
+
+An example might illustrate this.
+Assume a team of researchers A,B and C.
+They plan to simulate the pendulum of the wall clock which hangs in the lobby of their university.
+
+Researcher A has the task to measure the size and properties of this real pendulum and to take a video of the pendulum to compare output data against.
+Researcher B has the task of using these parameters to perform a simulation of the pendulum.
+Researcher C has the task of post-processing the output data to overlay the video of the real pendulum with the simulation output.
+
+The team has to deal different data sets which might be classified into three categories corresponding to the stages above.
+
+1. input parameters / data
+2. data in memory for simulation code
+3. output of quantities in system / results
+
+Researcher A probably specifies the parameters, e.g. the length of the pendulum, including the units, since this is very natural when measuring something.
+He or she might even have enough foresight to map the pixels in the video to a physical scale.
+Luckily the time is store automatically in videos anyways.
+
+Researcher B then uses the input data and converts it to whatever unit system is used in the simulation code.
+This is important, since the definition of the gravitational constant needs to be correct to predict the frequency of the pendulum correctly.
+Finally B's code saves the output data along with the units used in the code.
+
+Researcher C then takes the simulation output from B and animate the pendulum.
+Finally, calculating a mapping using the unit specifications from B's output and the mapping for A's video, C overlays the video with the simulation output.
+The result matches nicely and the resulting video shows the animated pendulum and the real pendulum swinging in unison.
+
+There are three steps where clarity about the units of the data is especially important.
+
++ from stage 1. to 2., when B uses A's measured values
++ from stage 2. to 3., when C uses B's results to animate the pendulum
++ in stage 3., when the results from A. and B. are combined
+
+Here are some problems that might occur otherwise.
+
+If A does not specify the unit on the input parameters, let's say the length is denoted by =12.4= without a unit, B has to ask a which ruler was used, leading to a delay in the project.
+Or B just assumes a certain unit which seems logical which might lead to wrong results.
+
+If B's simulation program write each quantity into a separate file, it might, for whatever reason, use different timescales for the output.
+Maybe one quantity is saved together with the time specified in seconds and another one together with the time in periods of the pendulum.
+Say B is sloppy about specifying the unit in each output file.
+Then C might import all data in a script assuming the same unit for the time in each time series.
+This most likely causes confusion which might be solved or again leads to wrong results.
+
+** analogue in astronomy
+
+The three stages performed by the different researchers might be mapped to terms usually used in astronomy:
+
+1. observation
+2. simulation of a model
+3. verification of the model using observational data
+
+** Take away lessons
+There are three lessons I took from writing this story
+
+1. input parameters should be specified with their units explicitly: the code can then automatically convert it to whatever unit system is used for the simulation
+2. the unit of each quantity in the output data should be specified explicitly (also dimensionless): the code knows the unit each quantity and if not, these need to be specified. Physical quantities have units and if the equations are made dimensionless, this needs to be specified!
+3. dimensionless parameters should have the unit =dimensionless=: not specifying a unit leaves some ambiguity, specifying a unit to be dimensionless leave no room for interpretation
+
+* Useful resources
+
++ for python users, the [[http://docs.astropy.org/en/stable/units/][astropy units module]] takes care of unit conversions and provides numpy array with units
